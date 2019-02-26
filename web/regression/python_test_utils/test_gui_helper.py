@@ -28,11 +28,9 @@ def close_bgprocess_popup(tester):
     # In cases where restore div is not closed (sometime due to some error)
     try:
         if tester.driver.find_element_by_xpath(
-                "//div[contains(text(), 'Process Watcher - "
-                "Restoring backup')]"):
-            tester.driver.find_element_by_xpath(
-                "//div[div[div[div[contains(text(), 'Process Watcher "
-                "- Restoring backup')]]]]"
-                "/following-sibling::div/div/div").click()
+                "//div[@class='card-header bg-primary d-flex']/div[contains("
+                "text(), 'Restoring backup')]"):
+            tester.driver.find_element_by_css_selector(
+                ".btn.btn-sm-sq.btn-primary.pg-bg-close > i").click()
     except Exception:
         pass
