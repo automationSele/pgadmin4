@@ -15,6 +15,7 @@ from selenium.webdriver.common.keys import Keys
 
 from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
+from .locators import QueryToolLocatorsCss
 
 
 class QueryToolJourneyTest(BaseFeatureTest):
@@ -73,16 +74,18 @@ class QueryToolJourneyTest(BaseFeatureTest):
 
     def _test_history_tab(self):
         self.__clear_query_tool()
-        editor_input = self.page.find_by_id("output-panel")
+        editor_input = self.page.find_by_css_selector(
+            QueryToolLocatorsCss.query_editor_panel)
         self.page.click_element(editor_input)
         self._execute_query("SELECT * FROM table_that_doesnt_exist")
 
         self.page.click_tab("Query History")
         selected_history_entry = self.page.find_by_css_selector(
-            "#query_list .selected")
+            QueryToolLocatorsCss.query_history_selected)
         self.assertIn("SELECT * FROM table_that_doesnt_exist",
                       selected_history_entry.text)
-        failed_history_detail_pane = self.page.find_by_id("query_detail")
+        failed_history_detail_pane = self.page.find_by_css_selector(
+            QueryToolLocatorsCss.query_history_detail)
 
         self.assertIn(
             "Error Message relation \"table_that_doesnt_exist\" "
@@ -108,7 +111,8 @@ class QueryToolJourneyTest(BaseFeatureTest):
         newly_selected_history_entry = self.page.find_by_xpath(
             "//*[@id='query_list']/ul/li[2]")
         self.page.click_element(newly_selected_history_entry)
-        selected_history_detail_pane = self.page.find_by_id("query_detail")
+        selected_history_detail_pane = self.page.find_by_css_selector(
+            QueryToolLocatorsCss.query_history_detail)
         self.assertIn("SELECT * FROM table_that_doesnt_exist",
                       selected_history_detail_pane.get_attribute('innerHTML'))
 
@@ -118,7 +122,8 @@ class QueryToolJourneyTest(BaseFeatureTest):
 
         self.page.fill_codemirror_area_with("SELECT * FROM hats")
         for _ in range(15):
-            self.page.find_by_id("btn-flash").click()
+            self.page.find_by_css_selector(
+                QueryToolLocatorsCss.btn_execute_query).click()
             self.page.wait_for_query_tool_loading_indicator_to_disappear()
 
         self.page.click_tab("Query History")
@@ -140,7 +145,8 @@ class QueryToolJourneyTest(BaseFeatureTest):
         self.page.click_element(editor_input)
         self.page.fill_codemirror_area_with("SELECT * FROM hats")
         for _ in range(15):
-            self.page.find_by_id("btn-flash").click()
+            self.page.find_by_css_selector(
+                QueryToolLocatorsCss.btn_execute_query).click()
             self.page.wait_for_query_tool_loading_indicator_to_disappear()
 
         self.page.click_tab("History")
@@ -173,7 +179,8 @@ class QueryToolJourneyTest(BaseFeatureTest):
 
     def _execute_query(self, query):
         self.page.fill_codemirror_area_with(query)
-        self.page.find_by_id("btn-flash").click()
+        self.page.find_by_css_selector(
+            QueryToolLocatorsCss.btn_execute_query).click()
 
     def _assert_clickable(self, element):
         self.page.click_element(element)

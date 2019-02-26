@@ -109,7 +109,7 @@ CREATE TABLE public.defaults_{0}
         for cnt in (1, 2):
             self.page.select_tree_item('defaults_{0}'.format(str(cnt)))
             # Open Object -> View/Edit data
-            self._view_data_grid()
+            self._view_data_grid('defaults_{0}'.format(str(cnt)))
 
             self.page.wait_for_query_tool_loading_indicator_to_disappear()
             # Run test to insert a new row in table with default values
@@ -214,7 +214,7 @@ CREATE TABLE public.defaults_{0}
         self.page.toggle_open_tree_item('public')
         self.page.toggle_open_tree_item('Tables')
 
-    def _view_data_grid(self):
+    def _view_data_grid(self, table_name):
         self.page.driver.find_element_by_link_text("Object").click()
         ActionChains(
             self.page.driver
@@ -224,7 +224,8 @@ CREATE TABLE public.defaults_{0}
         self.page.find_by_partial_link_text("All Rows").click()
         time.sleep(1)
         # wait until datagrid frame is loaded.
-        self.page.click_tab('Edit Data -')
+
+        self.page.click_tab(table_name)
 
         self.wait.until(
             EC.visibility_of_element_located(
@@ -308,6 +309,7 @@ CREATE TABLE public.defaults_{0}
                 "arguments[0].scrollIntoView(false)", element)
 
             if (idx != 1 and not is_new_row) or is_new_row:
+                self.assertEquals(element.text, config_data[str(idx)][1])
                 self.assertEquals(element.text, config_data[str(idx)][1])
 
         # scroll browser back to the left
