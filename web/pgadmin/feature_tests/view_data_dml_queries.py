@@ -28,7 +28,7 @@ except Exception as e:
     print(str(e))
 
 
-class CheckForViewDataTest():
+class CheckForViewDataTest(BaseFeatureTest):
     """
     Test cases to validate insert, update operations in table
     with input test data
@@ -182,15 +182,15 @@ CREATE TABLE public.defaults_{0}
                 cell_el.find_element_by_css_selector('input').clear()
             else:
                 ActionChains(self.driver).send_keys(value).perform()
-
         elif cell_type in ['text', 'json', 'text[]', 'boolean[]']:
-            self.page.find_by_xpath(
-                "//*[contains(@class, 'pg_textarea')]").click()
-            ActionChains(self.driver).send_keys(value).perform()
+            text_area_ele = self.page.find_by_css_selector(
+                ".pg-text-editor > textarea")
+            text_area_ele.click()
+            text_area_ele.send_keys(value)
 
             # Click on editor's Save button
             self.page.find_by_css_selector(
-                '.pg_text_editor button[data-label="Save"]').click()
+                '.btn.btn-primary.long_text_editor').click()
         else:
             # Boolean editor test for to True click
             if data[1] == 'true':

@@ -21,7 +21,7 @@ import config
 from .locators import QueryToolLocatorsCss
 
 
-class QueryToolFeatureTest():
+class QueryToolFeatureTest(BaseFeatureTest):
     """
         This feature test will test the different query tool features.
     """
@@ -97,9 +97,6 @@ class QueryToolFeatureTest():
         # explain query with JIT stats
         print("Explain query with JIT stats... ",
               file=sys.stderr, end="")
-
-        print("returned value from self._supported_jit_on_server() %s"
-              ""%self._supported_jit_on_server())
         if self._supported_jit_on_server():
             self._query_tool_explain_check_jit_stats()
             print("OK.", file=sys.stderr)
@@ -736,20 +733,25 @@ SELECT 1, pg_sleep(300)"""
             self.server['port'],
             self.server['sslmode']
         )
-
         pg_cursor = connection.cursor()
         pg_cursor.execute('select version()')
         version_string = pg_cursor.fetchone()
-        print("Version version_string %s"%version_string)
-        print("Version connection.server_version %s" %
-              connection.server_version)
+
+        # check if jit is turned on
+        jit_enabled = False
+        pg_cursor.execute('show jit')
+        show_jit = pg_cursor.fetchone()
+        if show_jit[0] == 'on':
+            jit_enabled = True
+
         is_edb = False
         if len(version_string) > 0:
             is_edb = 'EnterpriseDB' in version_string[0]
 
         connection.close()
 
-        return connection.server_version >= 110000 and not is_edb
+        return connection.server_version >= 110000 and not is_edb\
+               and jit_enabled
 
     def _query_tool_explain_check_jit_stats(self):
         wait = WebDriverWait(self.page.driver, 10)
@@ -766,11 +768,21 @@ SELECT 1, pg_sleep(300)"""
             QueryToolLocatorsCss.btn_explain_options_dropdown)
         explain_op.click()
 
-        # disable Explain options and auto rollback only if they are enabled.
+        # disable Explain options and only enable COST option
         for op in (QueryToolLocatorsCss.btn_explain_verbose,
-                   QueryToolLocatorsCss.btn_explain_costs):
-            self.page.find_by_css_selector(op).click()
+                   QueryToolLocatorsCss.btn_explain_costs,
+                   QueryToolLocatorsCss.btn_explain_buffers,
+                   QueryToolLocatorsCss.btn_explain_timing):
+            btn = self.page.find_by_css_selector(op)
+            check = btn.find_element_by_tag_name('i')
+            if 'visibility-hidden' not in check.get_attribute('class'):
+                btn.click()
+        # click cost button
+        cost_btn = self.page.find_by_css_selector(
+            QueryToolLocatorsCss.btn_explain_costs)
+        cost_btn.click()
 
+        # close explain options
         explain_op.click()
 
         self.page.find_by_css_selector(
