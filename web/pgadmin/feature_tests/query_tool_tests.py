@@ -739,10 +739,13 @@ SELECT 1, pg_sleep(300)"""
 
         # check if jit is turned on
         jit_enabled = False
-        pg_cursor.execute('show jit')
-        show_jit = pg_cursor.fetchone()
-        if show_jit[0] == 'on':
-            jit_enabled = True
+        try:
+            pg_cursor.execute('show jit')
+            show_jit = pg_cursor.fetchone()
+            if show_jit[0] == 'on':
+                jit_enabled = True
+        except:
+            pass
 
         is_edb = False
         if len(version_string) > 0:
@@ -750,8 +753,7 @@ SELECT 1, pg_sleep(300)"""
 
         connection.close()
 
-        return connection.server_version >= 110000 and not is_edb\
-               and jit_enabled
+        return connection.server_version >= 110000 and jit_enabled
 
     def _query_tool_explain_check_jit_stats(self):
         wait = WebDriverWait(self.page.driver, 10)
