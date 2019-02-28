@@ -21,7 +21,7 @@ import config
 from .locators import QueryToolLocatorsCss
 
 
-class QueryToolFeatureTest(BaseFeatureTest):
+class QueryToolFeatureTest():
     """
         This feature test will test the different query tool features.
     """
@@ -97,6 +97,9 @@ class QueryToolFeatureTest(BaseFeatureTest):
         # explain query with JIT stats
         print("Explain query with JIT stats... ",
               file=sys.stderr, end="")
+
+        print("returned value from self._supported_jit_on_server() %s"
+              ""%self._supported_jit_on_server())
         if self._supported_jit_on_server():
             self._query_tool_explain_check_jit_stats()
             print("OK.", file=sys.stderr)
@@ -737,7 +740,9 @@ SELECT 1, pg_sleep(300)"""
         pg_cursor = connection.cursor()
         pg_cursor.execute('select version()')
         version_string = pg_cursor.fetchone()
-
+        print("Version version_string %s"%version_string)
+        print("Version connection.server_version %s" %
+              connection.server_version)
         is_edb = False
         if len(version_string) > 0:
             is_edb = 'EnterpriseDB' in version_string[0]
