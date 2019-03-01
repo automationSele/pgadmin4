@@ -17,7 +17,7 @@ from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
 
 
-class QueryToolAutoCompleteFeatureTest():
+class QueryToolAutoCompleteFeatureTest(BaseFeatureTest):
     """
         This feature test will test the query tool auto complete feature.
     """

@@ -18,7 +18,7 @@ from selenium.common.exceptions import TimeoutException, \
     StaleElementReferenceException
 
 
-class BrowserToolBarFeatureTest():
+class BrowserToolBarFeatureTest(BaseFeatureTest):
     """
         This feature test will test the tool bar on Browser panel.
     """

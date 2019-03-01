@@ -16,7 +16,7 @@ from regression.python_test_utils import test_utils
 from regression.python_test_utils import test_gui_helper
 
 
-class PGUtilitiesBackupFeatureTest():
+class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
     """ This class test PG utilities - Backup and Restore test scenarios """
 
     scenarios = [
