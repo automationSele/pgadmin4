@@ -84,6 +84,7 @@ class QueryToolJourneyTest(BaseFeatureTest):
             QueryToolLocatorsCss.query_history_selected)
         self.assertIn("SELECT * FROM table_that_doesnt_exist",
                       selected_history_entry.text)
+
         failed_history_detail_pane = self.page.find_by_css_selector(
             QueryToolLocatorsCss.query_history_detail)
 
@@ -91,9 +92,16 @@ class QueryToolJourneyTest(BaseFeatureTest):
             "Error Message relation \"table_that_doesnt_exist\" "
             "does not exist", failed_history_detail_pane.text
         )
-        ActionChains(self.page.driver) \
-            .send_keys(Keys.ARROW_DOWN) \
-            .perform()
+        # ActionChains(self.page.driver) \
+        #     .send_keys(Keys.ARROW_DOWN) \
+        #     .perform()
+        # get the query history rows and click the previous query row which
+        # was executed and verify it
+        history_rows = self.driver.find_elements_by_css_selector(
+            "#query_list> ul > .list-item")
+        print("the number of history_rows are %s"%len(history_rows))
+        history_rows[1].click()
+
         selected_history_entry = self.page.find_by_css_selector(
             "#query_list .selected")
         self.assertIn(("SELECT * FROM %s ORDER BY value" %

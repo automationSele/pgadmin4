@@ -733,16 +733,19 @@ SELECT 1, pg_sleep(300)"""
             self.server['port'],
             self.server['sslmode']
         )
-
         pg_cursor = connection.cursor()
         pg_cursor.execute('select version()')
         version_string = pg_cursor.fetchone()
 
+        # check if jit is turned on
         jit_enabled = False
-        show_jit = pg_cursor.execute('show jit')
-        if show_jit == 'on':
-            jit_enabled = True
-        print("Debug: the jit is: %s"%jit_enabled)
+        try:
+            pg_cursor.execute('show jit')
+            show_jit = pg_cursor.fetchone()
+            if show_jit[0] == 'on':
+                jit_enabled = True
+        except:
+            pass
 
         is_edb = False
         if len(version_string) > 0:
@@ -750,8 +753,7 @@ SELECT 1, pg_sleep(300)"""
 
         connection.close()
 
-        return connection.server_version >= 110000 and not is_edb\
-               and jit_enabled
+        return connection.server_version >= 110000 and jit_enabled
 
     def _query_tool_explain_check_jit_stats(self):
         wait = WebDriverWait(self.page.driver, 10)
@@ -768,15 +770,21 @@ SELECT 1, pg_sleep(300)"""
             QueryToolLocatorsCss.btn_explain_options_dropdown)
         explain_op.click()
 
-        # disable Explain options and auto rollback only if they are enabled.
-        # to do: do COST enable and rest should be disabled
-        # for op in (QueryToolLocatorsCss.btn_explain_verbose,
-        #            QueryToolLocatorsCss.btn_explain_costs):
-        #     self.page.find_by_css_selector(op).click()
+        # disable Explain options and only enable COST option
+        for op in (QueryToolLocatorsCss.btn_explain_verbose,
+                   QueryToolLocatorsCss.btn_explain_costs,
+                   QueryToolLocatorsCss.btn_explain_buffers,
+                   QueryToolLocatorsCss.btn_explain_timing):
+            btn = self.page.find_by_css_selector(op)
+            check = btn.find_element_by_tag_name('i')
+            if 'visibility-hidden' not in check.get_attribute('class'):
+                btn.click()
+        # click cost button
+        cost_btn = self.page.find_by_css_selector(
+            QueryToolLocatorsCss.btn_explain_costs)
+        cost_btn.click()
 
-        self.page.find_by_css_selector(
-            QueryToolLocatorsCss.btn_explain_costs).click()
-
+        # close explain options
         explain_op.click()
 
         self.page.find_by_css_selector(
