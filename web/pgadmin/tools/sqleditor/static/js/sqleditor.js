@@ -41,6 +41,7 @@ define('tools.querytool', [
   'backgrid.sizeable.columns',
   'slick.pgadmin.formatters',
   'slick.pgadmin.editors',
+  'slick.pgadmin.plugins/slick.autocolumnsize',
   'pgadmin.browser',
   'pgadmin.tools.user_management',
 ], function(
@@ -236,6 +237,7 @@ define('tools.querytool', [
         height: '100%',
         isCloseable: false,
         isPrivate: true,
+        extraClasses: 'hide-vertical-scrollbar',
         content: '<div id ="datagrid" class="sql-editor-grid-container text-12" tabindex: "0"></div>',
       });
 
@@ -263,7 +265,7 @@ define('tools.querytool', [
         name: 'history',
         title: gettext('Query History'),
         width: '100%',
-        height: '100%',
+        height: '33%',
         isCloseable: false,
         isPrivate: true,
         content: '<div id ="history_grid" class="sql-editor-history-container" tabindex: "0"></div>',
@@ -273,7 +275,7 @@ define('tools.querytool', [
         name: 'scratch',
         title: gettext('Scratch Pad'),
         width: '25%',
-        height: '100%',
+        height: '33%',
         isCloseable: true,
         isPrivate: false,
         content: '<div class="sql-scratch" tabindex: "0"><textarea wrap="off"></textarea></div>',
@@ -817,7 +819,7 @@ define('tools.querytool', [
 
       var $data_grid = $('#datagrid');
       // Calculate height based on panel size at runtime & set it
-      var grid_height = $($('#editor-panel').find('.wcFrame')[1]).height() - 35;
+      var grid_height = $(this.data_output_panel.$container.parent().parent()).height() - 35;
       $data_grid.height(grid_height);
 
       var dataView = self.dataView = new Slick.Data.DataView(),
@@ -863,6 +865,7 @@ define('tools.querytool', [
       grid.registerPlugin(new ActiveCellCapture());
       grid.setSelectionModel(new XCellSelectionModel());
       grid.registerPlugin(gridSelector);
+      grid.registerPlugin(new Slick.AutoColumnSize());
       var headerButtonsPlugin = new Slick.Plugins.HeaderButtons();
       headerButtonsPlugin.onCommand.subscribe(function (e, args) {
         let command = args.command;
@@ -926,7 +929,7 @@ define('tools.querytool', [
           var column_size = self.handler['col_size'];
           column_size[self.handler['table_name']][col['id']] = col['width'];
         });
-      });
+      }.bind(grid));
 
       gridSelector.onBeforeGridSelectAll.subscribe(function(e, args) {
         if (self.handler.has_more_rows) {
@@ -1245,7 +1248,7 @@ define('tools.querytool', [
     /* This function is responsible to render output grid */
     grid_resize: function(grid) {
       var prev_height = $('#datagrid').height(),
-        h = $($('#editor-panel').find('.wcFrame')[1]).height() - 35,
+        h = $(this.data_output_panel.$container.parent().parent()).height() - 35,
         prev_viewport = grid.getViewport(),
         prev_viewport_rows = grid.getRenderedRange(),
         prev_cell = grid.getActiveCell();
@@ -2336,32 +2339,37 @@ define('tools.querytool', [
              * In case of Explain draw the graph on explain panel
              * and add json formatted data to collection and render.
              */
-            var explain_data_array = [];
-            if (
-              data.result && data.result.length >= 1 &&
-              data.result[0] && data.result[0][0] && data.result[0][0][0] &&
-              data.result[0][0][0].hasOwnProperty('Plan') &&
-              _.isObject(data.result[0][0][0]['Plan'])
-            ) {
-              var explain_data = [JSON.stringify(data.result[0][0], null, 2)];
-              explain_data_array.push(explain_data);
-              // Make sure - the 'Data Output' panel is visible, before - we
-              // start rendering the grid.
-              self.gridView.data_output_panel.focus();
-              setTimeout(
-                function() {
-                  self.gridView.render_grid(
-                    explain_data_array, self.columns, self.can_edit,
-                    self.client_primary_key
-                  );
-                  // Make sure - the 'Explain' panel is visible, before - we
-                  // start rendering the grid.
-                  self.gridView.explain_panel.focus();
-                  pgExplain.DrawJSONPlan(
-                    $('.sql-editor-explain'), data.result[0][0]
-                  );
-                }, 10
-              );
+            var explain_data_array = [],
+              explain_data_json = null;
+
+            if(data.types[0].typname === 'json') {
+              /* json is sent as text, parse it */
+              explain_data_json = JSON.parse(data.result[0]);
+
+              if (explain_data_json && explain_data_json[0] &&
+                explain_data_json[0].hasOwnProperty('Plan') &&
+                _.isObject(explain_data_json[0]['Plan'])
+              ) {
+                var explain_data = [JSON.stringify(explain_data_json, null, 2)];
+                explain_data_array.push(explain_data);
+                // Make sure - the 'Data Output' panel is visible, before - we
+                // start rendering the grid.
+                self.gridView.data_output_panel.focus();
+                setTimeout(
+                  function() {
+                    self.gridView.render_grid(
+                      explain_data_array, self.columns, self.can_edit,
+                      self.client_primary_key
+                    );
+                    // Make sure - the 'Explain' panel is visible, before - we
+                    // start rendering the grid.
+                    self.gridView.explain_panel.focus();
+                    pgExplain.DrawJSONPlan(
+                      $('.sql-editor-explain'), explain_data_json
+                    );
+                  }, 10
+                );
+              }
             } else {
               // Make sure - the 'Data Output' panel is visible, before - we
               // start rendering the grid.
@@ -3561,17 +3569,14 @@ define('tools.querytool', [
         var self = this,
           url = url_for('sqleditor.query_tool_download', {
             'trans_id': self.transId,
-          });
-
-        url += '?' + $.param({
-          query: query,
-          filename: filename,
-        });
+          }),
+          data = { query: query, filename: filename };
 
         // Get the CSV file
         self.download_csv_obj = $.ajax({
-          type: 'GET',
+          type: 'POST',
           url: url,
+          data: data,
           cache: false,
           async: true,
           xhrFields: {
@@ -3592,11 +3597,17 @@ define('tools.querytool', [
         .done(function(response) {
           let urlCreator = window.URL || window.webkitURL,
             url = urlCreator.createObjectURL(response),
-            link = document.createElement('a');
+            link = document.createElement('a'),
+            current_browser = pgAdmin.Browser.get_browser();
 
-          link.setAttribute('href', url);
-          link.setAttribute('download', filename);
-          link.click();
+          if (current_browser.name === 'IE' && window.navigator.msSaveBlob) {
+            // IE10+ : (has Blob, but not a[download] or URL)
+            window.navigator.msSaveBlob(response, filename);
+          } else {
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.click();
+          }
 
           self.download_csv_obj = undefined;
           // Enable the execute button

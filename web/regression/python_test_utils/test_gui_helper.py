@@ -17,9 +17,11 @@ def close_bgprocess_popup(tester):
     # In cases where backup div is not closed (sometime due to some error)
     try:
         if tester.driver.find_element_by_css_selector(
-                ".btn.btn-sm-sq.btn-primary.pg-bg-close > i"):
+                ".ajs-message.ajs-bg-bgprocess.ajs-visible > div > "
+                "div > div > i"):
             tester.driver.find_element_by_css_selector(
-                ".btn.btn-sm-sq.btn-primary.pg-bg-close > i").click()
+                ".ajs-message.ajs-bg-bgprocess.ajs-visible >div >div  "
+                ">div>i").click()
     except Exception:
         pass
 
