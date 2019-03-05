@@ -33,8 +33,11 @@ class BrowserToolBarFeatureTest(BaseFeatureTest):
         self.page.wait_for_spinner_to_disappear()
         self.page.add_server(self.server)
         self.test_table_name = "test_table" + str(random.randint(1000, 3000))
+        print("Debug: going to create table with name: %s"%self.test_table_name)
         test_utils.create_table(self.server, self.test_db,
                                 self.test_table_name)
+        print(
+            "Debug: created: %s" % self.test_table_name)
 
     def runTest(self):
         # Check for query tool button

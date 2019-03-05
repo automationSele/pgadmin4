@@ -33,7 +33,7 @@ except Exception as e:
         "datatype_test.json file load failed"
 
 
-class PGDataypeFeatureTest(BaseFeatureTest):
+class PGDataypeFeatureTest():
     """
         This feature test will test the different Postgres
         data-type output.

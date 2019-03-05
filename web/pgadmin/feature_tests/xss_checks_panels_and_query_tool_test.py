@@ -14,7 +14,7 @@ from selenium.webdriver import ActionChains
 import sys
 
 
-class CheckForXssFeatureTest(BaseFeatureTest):
+class CheckForXssFeatureTest():
     """
     Tests to check if pgAdmin4 is vulnerable to XSS.
 

@@ -18,7 +18,7 @@ from regression.feature_utils.base_feature_test import BaseFeatureTest
 from .locators import QueryToolLocatorsCss
 
 
-class QueryToolJourneyTest(BaseFeatureTest):
+class QueryToolJourneyTest():
     """
     Tests the path through the query tool
     """

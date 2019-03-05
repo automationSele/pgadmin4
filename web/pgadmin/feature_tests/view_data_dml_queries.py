@@ -28,7 +28,7 @@ except Exception as e:
     print(str(e))
 
 
-class CheckForViewDataTest(BaseFeatureTest):
+class CheckForViewDataTest():
     """
     Test cases to validate insert, update operations in table
     with input test data
