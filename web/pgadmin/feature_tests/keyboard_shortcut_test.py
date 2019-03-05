@@ -19,7 +19,7 @@ from regression.feature_utils.base_feature_test import BaseFeatureTest
 from selenium.webdriver.common.keys import Keys
 
 
-class KeyboardShortcutFeatureTest():
+class KeyboardShortcutFeatureTest(BaseFeatureTest):
     """
         This feature test will test the keyboard short is working
         properly.

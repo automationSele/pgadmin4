@@ -21,7 +21,7 @@ import config
 from .locators import QueryToolLocatorsCss
 
 
-class QueryToolFeatureTest():
+class QueryToolFeatureTest(BaseFeatureTest):
     """
         This feature test will test the different query tool features.
     """

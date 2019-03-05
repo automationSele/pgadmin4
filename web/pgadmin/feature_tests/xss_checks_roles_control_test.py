@@ -11,7 +11,7 @@ from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
 
 
-class CheckRoleMembershipControlFeatureTest():
+class CheckRoleMembershipControlFeatureTest(BaseFeatureTest):
     """Tests to check role membership control for xss."""
 
     scenarios = [

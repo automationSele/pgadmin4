@@ -15,7 +15,7 @@ from regression.python_test_utils import test_utils
 from regression.python_test_utils import test_gui_helper
 
 
-class PGUtilitiesMaintenanceFeatureTest():
+class PGUtilitiesMaintenanceFeatureTest(BaseFeatureTest):
     """ This class test PG utilities test scenarios """
 
     scenarios = [
