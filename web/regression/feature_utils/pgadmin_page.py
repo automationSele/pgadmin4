@@ -371,6 +371,18 @@ class PgadminPage:
             "field to contain '" + str(content) + "'", input_field_has_content,
             wait)
 
+    def check_if_element_exist_by_xpath(self, xpath, timeout=5):
+        """This function will verify if an element exist and on that basis
+        will return True or False. Will handle exception internally"""
+        element_found = False
+        try:
+            WebDriverWait(self.driver, timeout, .01).until(
+            EC.visibility_of_element_located((By.XPATH, xpath)))
+            element_found = True
+        except:
+            pass
+        return element_found
+
     def wait_for_element(self, find_method_with_args):
         def element_if_it_exists(driver):
             try:

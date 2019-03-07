@@ -21,7 +21,7 @@ import config
 from .locators import QueryToolLocatorsCss
 
 
-class QueryToolFeatureTest(BaseFeatureTest):
+class QueryToolFeatureTest():
     """
         This feature test will test the different query tool features.
     """
@@ -181,6 +181,10 @@ SELECT generate_series(1, {}) as id1, 'dummy' as id2""".format(
         self.page.find_by_css_selector(
             QueryToolLocatorsCss.btn_execute_query).click()
 
+        # wait for header of the table to be visible
+        wait.until(EC.visibility_of_element_located(
+            (By.XPATH,'//div[@class="slick-header-columns"]')))
+
         wait.until(EC.presence_of_element_located(
             (By.XPATH,
              '//span[@data-row="0" and text()="1"]'))
@@ -203,6 +207,10 @@ SELECT generate_series(1, {}) as id1, 'dummy' as id2""".format(
         self.page.find_by_css_selector(
             QueryToolLocatorsCss.btn_execute_query).click()
 
+        # wait for header of the table to be visible
+        wait.until(EC.visibility_of_element_located(
+            (By.XPATH,'//div[@class="slick-header-columns"]')))
+        # wait for first row to contain value
         wait.until(EC.presence_of_element_located(
             (By.XPATH,
              '//span[@data-row="0" and text()="1"]'))
@@ -223,6 +231,10 @@ SELECT generate_series(1, {}) as id1, 'dummy' as id2""".format(
             QueryToolLocatorsCss.btn_execute_query).click()
 
         self.page.wait_for_query_tool_loading_indicator_to_disappear()
+
+        # wait for header of the table to be visible
+        wait.until(EC.visibility_of_element_located(
+            (By.XPATH,'//div[@class="slick-header-columns"]')))
 
         wait.until(EC.presence_of_element_located(
             (By.XPATH,
