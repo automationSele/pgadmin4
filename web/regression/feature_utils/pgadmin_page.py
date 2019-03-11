@@ -166,7 +166,7 @@ class PgadminPage:
         # 'sleep' here helps in cases where underlying nodes are auto opened.
         # Otherwise, encountered situations where False value is returned
         # even if the underlying node to be clicked was Opened.
-        time.sleep(.3)
+        time.sleep(.5)
         item_with_text = self.find_by_xpath(
             "//div[@id='tree']//span[@class='aciTreeItem']/span["
             "(@class='aciTreeText') and text()='" + tree_item_text + "']")
