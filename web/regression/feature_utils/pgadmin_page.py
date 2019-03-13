@@ -166,19 +166,38 @@ class PgadminPage:
         # 'sleep' here helps in cases where underlying nodes are auto opened.
         # Otherwise, encountered situations where False value is returned
         # even if the underlying node to be clicked was Opened.
-        time.sleep(.5)
+        time.sleep(.6)
         item_with_text = self.find_by_xpath(
             "//div[@id='tree']//span[@class='aciTreeItem']/span["
             "(@class='aciTreeText') and text()='" + tree_item_text + "']")
 
         self.driver.execute_script("arguments[0].scrollIntoView()",
                                    item_with_text)
+
         if item_with_text.find_element_by_xpath(
             ".//ancestor::*[@class='aciTreeLine']").get_attribute(
                 "aria-expanded") == 'false':
             item = item_with_text.find_element_by_xpath(
                 ".//parent::*[@class='aciTreeItem']")
             ActionChains(self.driver).double_click(item).perform()
+
+    def toggle_open_trees_node(self):
+        """The function will be used for opening Trees node only"""
+
+        # get the element which contains 'aria-expanded' info
+        tables_expansion_ele =self.find_by_xpath("//div[div[div[div[div[div"
+                                                 "[div[div[span[span["
+                                                 "(@class='aciTreeText') and "
+                                                 "text()='Tables']]]]]]]]]]")
+
+        if tables_expansion_ele.get_attribute('aria-expanded') =='false':
+            # button element of the Tables node to open it
+            item_button = self.find_by_xpath(
+                "//div[span[span[(@class='aciTreeText') and text()"
+                "='Tables']]]/span[@class='aciTreeButton']")
+            ActionChains(self.driver).click(item_button).perform()
+        else:
+            print("The tree node is already opened")
 
     def toggle_open_server(self, tree_item_text):
         def check_for_password_dialog_or_tree_open(driver):
