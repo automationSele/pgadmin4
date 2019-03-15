@@ -103,6 +103,13 @@ class BaseFeatureTest(BaseTestGenerator):
             )
         )
 
+        print("debug; screenshot is saved at: "+'{0}/{1}-{2}-Python-{3}.png'.format(
+                screenshots_server_directory,
+                self.__class__.__name__,
+                date,
+                python_version
+            ))
+
     def ensure_directory_exists(self, path):
         try:
             os.mkdir(path)

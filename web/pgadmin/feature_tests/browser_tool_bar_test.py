@@ -34,6 +34,7 @@ class BrowserToolBarFeatureTest(BaseFeatureTest):
 
         print("Debug: going to check screen shot from before")
         self._screenshot()
+        print("Debug: screenshot is printed from browser tools test")
         self.page.add_server(self.server)
         self.test_table_name = "test_table" + str(random.randint(1000, 3000))
         test_utils.create_table(self.server, self.test_db,
