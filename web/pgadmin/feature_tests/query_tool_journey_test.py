@@ -18,7 +18,7 @@ from regression.feature_utils.base_feature_test import BaseFeatureTest
 from .locators import QueryToolLocatorsCss
 
 
-class QueryToolJourneyTest(BaseFeatureTest):
+class QueryToolJourneyTest():
     """
     Tests the path through the query tool
     """
@@ -97,6 +97,9 @@ class QueryToolJourneyTest(BaseFeatureTest):
         #     .perform()
         # get the query history rows and click the previous query row which
         # was executed and verify it
+        self.page.wait_for_element(lambda driver: driver
+                                   .find_element_by_css_selector
+        ("#query_list> ul > .list-item"))
         history_rows = self.driver.find_elements_by_css_selector(
             "#query_list> ul > .list-item")
         print("the number of history_rows are %s"%len(history_rows))

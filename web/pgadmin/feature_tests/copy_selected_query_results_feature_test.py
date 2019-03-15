@@ -16,7 +16,7 @@ from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
 
 
-class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
+class CopySelectedQueryResultsFeatureTest():
     """
     Tests various ways to copy data from the query results grid.
     """

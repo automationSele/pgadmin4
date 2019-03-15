@@ -13,7 +13,7 @@ from regression.feature_utils.base_feature_test import BaseFeatureTest
 from regression.python_test_utils import test_utils
 
 
-class TableDdlFeatureTest(BaseFeatureTest):
+class TableDdlFeatureTest():
     """ This class test acceptance test scenarios """
 
     scenarios = [

@@ -16,7 +16,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 
-class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
+class CheckDebuggerForXssFeatureTest():
     """Tests to check if Debugger is vulnerable to XSS."""
 
     scenarios = [

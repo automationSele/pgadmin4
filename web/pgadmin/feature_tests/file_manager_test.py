@@ -20,7 +20,7 @@ from regression.feature_utils.base_feature_test import BaseFeatureTest
 from .locators import QueryToolLocatorsCss
 
 
-class CheckFileManagerFeatureTest(BaseFeatureTest):
+class CheckFileManagerFeatureTest():
     """Tests to check file manager for XSS."""
 
     scenarios = [

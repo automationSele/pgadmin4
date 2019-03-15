@@ -45,6 +45,8 @@ class KeyboardShortcutFeatureTest(BaseFeatureTest):
 
     def runTest(self):
         self._update_preferences()
+        print("debug: print screen")
+        self._screenshot()
         # On updating keyboard shortcuts, preference cache is updated.
         # There is no UI event through which we can identify that the cache
         # is updated, So, added time.sleep()

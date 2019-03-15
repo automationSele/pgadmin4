@@ -31,6 +31,8 @@ class BrowserToolBarFeatureTest(BaseFeatureTest):
 
     def before(self):
         self.page.wait_for_spinner_to_disappear()
+
+        print("Debug: going to check screen shot from before")
         self._screenshot()
         self.page.add_server(self.server)
         self.test_table_name = "test_table" + str(random.randint(1000, 3000))
