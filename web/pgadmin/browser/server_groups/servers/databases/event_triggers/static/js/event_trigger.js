@@ -108,7 +108,7 @@ define('pgadmin.node.event_trigger', [
         },{
           id: 'comment', label: gettext('Comment'), type: 'multiline',
         },{
-          id: 'enabled', label: gettext('Enabled status'),
+          id: 'enabled', label: gettext('Enabled?'),
           type:'radio', group: gettext('Definition'), mode: ['properties', 'edit','create'],
           options: [
             {label: 'Enable', value: 'O'},
@@ -129,9 +129,12 @@ define('pgadmin.node.event_trigger', [
             {label: 'SQL DROP', value: 'SQL_DROP'},
           ],
         },{
-          id: 'when', label: gettext('When'), type: 'multiline', group: gettext('Definition'),
+          id: 'when', label: gettext('When'),  cell: 'string',
+          type: 'text', group: gettext('Definition'),
+          control: Backform.SqlFieldControl,
+          extraClasses:['custom_height_css_class'],
         },{
-          id: 'seclabels', label: gettext('Security Labels'),
+          id: 'seclabels', label: gettext('Security labels'),
           model: pgBrowser.SecLabelModel, editable: false, type: 'collection',
           group: gettext('Security'), mode: ['edit', 'create'],
           min_version: 90200, canAdd: true,

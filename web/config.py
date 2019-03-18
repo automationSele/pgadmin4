@@ -50,7 +50,7 @@ APP_ICON = 'pg-icon'
 
 # Application version number components
 APP_RELEASE = 4
-APP_REVISION = 2
+APP_REVISION = 3
 
 # Application version suffix, e.g. 'beta1', 'dev'. Usually an empty string
 # for GA releases.
@@ -59,7 +59,7 @@ APP_SUFFIX = ''
 # Numeric application version for upgrade checks. Should be in the format:
 # [X]XYYZZ, where X is the release version, Y is the revision, with a leading
 # zero if needed, and Z represents the suffix, with a leading zero if needed
-APP_VERSION_INT = 40200
+APP_VERSION_INT = 40300
 
 # DO NOT CHANGE!
 # The application version string, constructed from the components
@@ -244,6 +244,9 @@ SQLITE_TIMEOUT = 500
 # Allow database connection passwords to be saved if the user chooses.
 # Set to False to disable password saving.
 ALLOW_SAVE_PASSWORD = True
+
+# Maximum number of history queries stored per user/server/database
+MAX_QUERY_HIST_STORED = 20
 
 ##########################################################################
 # Server-side session storage path

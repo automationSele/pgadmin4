@@ -4,7 +4,8 @@ Version 4.3
 
 Release date: 2019-03-07
 
-This release contains a number of new features and fixes reported since the release of pgAdmin4 4.2
+This release contains a number of new features and fixes reported since the
+release of pgAdmin4 4.2
 
 Features
 ********
@@ -30,6 +31,7 @@ Bug fixes
 | `Bug #3600 <https://redmine.postgresql.org/issues/3600>`_ - Ensure JSON data isn't modified in-flight by psycopg2 when using View/Edit data.
 | `Bug #3673 <https://redmine.postgresql.org/issues/3673>`_ - Modify the Download as CSV option to use the same connection as the Query Tool its running in so temporary tables etc. can be used.
 | `Bug #3873 <https://redmine.postgresql.org/issues/3873>`_ - Fix context sub-menu alignment on Safari.
+| `Bug #3890 <https://redmine.postgresql.org/issues/3890>`_ - Update documentation screenshots as per new design.
 | `Bug #3906 <https://redmine.postgresql.org/issues/3906>`_ - Fix alignment of Close and Maximize button of Grant Wizard.
 | `Bug #3911 <https://redmine.postgresql.org/issues/3911>`_ - Add full support and testsfor all PG server side encodings.
 | `Bug #3912 <https://redmine.postgresql.org/issues/3912>`_ - Fix editing of table data with a JSON primary key.

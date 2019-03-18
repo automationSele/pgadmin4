@@ -60,7 +60,8 @@ clean: clean-appbundle clean-docker clean-dist clean-docs clean-node clean-pip c
 	rm -rf web/pgadmin/static/css/generated/.cache
 
 clean-runtime:
-	cd runtime && make clean
+	if [ -f runtime/Makefile ]; then (cd runtime && make clean); fi;
+	rm -rf build-*
 
 clean-appbundle:
 	rm -rf mac-build/
@@ -91,6 +92,9 @@ docs:
 
 docs-pdf:
 	LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 $(MAKE) -C docs/en_US -f Makefile.sphinx latexpdf
+
+docs-epub:
+	LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 $(MAKE) -C docs/en_US -f Makefile.sphinx epub
 
 messages: msg-extract msg-update msg-compile
 

@@ -7,18 +7,17 @@
 //
 //////////////////////////////////////////////////////////////
 
-import HistoryCollection from '../../../pgadmin/static/js/history/history_collection';
-import '../helper/enzyme.helper';
+import HistoryCollection from 'sources/sqleditor/history/history_collection';
 
 describe('historyCollection', function () {
-  let historyCollection, historyModel, onChangeSpy, onResetSpy;
+  let historyCollection, historyModel, onAddSpy, onResetSpy;
   beforeEach(() => {
     historyModel = [{some: 'thing', someOther: ['array element']}];
     historyCollection = new HistoryCollection(historyModel);
-    onChangeSpy = jasmine.createSpy('onChangeHandler');
+    onAddSpy = jasmine.createSpy('onAddHandler');
     onResetSpy = jasmine.createSpy('onResetHandler');
 
-    historyCollection.onChange(onChangeSpy);
+    historyCollection.onAdd(onAddSpy);
     historyCollection.onReset(onResetSpy);
   });
 
@@ -26,22 +25,23 @@ describe('historyCollection', function () {
     it('returns 0 when underlying history model has no elements', function () {
       historyCollection = new HistoryCollection([]);
 
-      expect(historyCollection.length()).toBe(0);
+      expect(historyCollection.length()).toEqual(0);
     });
 
     it('returns the length of the underlying history model', function () {
-      expect(historyCollection.length()).toBe(1);
+      expect(historyCollection.length()).toEqual(1);
     });
   });
 
   describe('add', function () {
     let expectedHistory;
+    let newEntry = {some: 'new thing', someOther: ['value1', 'value2']};
     beforeEach(() => {
-      historyCollection.add({some: 'new thing', someOther: ['value1', 'value2']});
+      historyCollection.add(newEntry);
 
       expectedHistory = [
-        {some: 'thing', someOther: ['array element']},
         {some: 'new thing', someOther: ['value1', 'value2']},
+        {some: 'thing', someOther: ['array element']},
       ];
     });
 
@@ -50,7 +50,7 @@ describe('historyCollection', function () {
     });
 
     it('calls the onChange function', function () {
-      expect(onChangeSpy).toHaveBeenCalledWith(expectedHistory);
+      expect(onAddSpy).toHaveBeenCalledWith(newEntry);
     });
   });
 
@@ -61,7 +61,7 @@ describe('historyCollection', function () {
 
     it('drops the history', function () {
       expect(historyCollection.historyList).toEqual([]);
-      expect(historyCollection.length()).toBe(0);
+      expect(historyCollection.length()).toEqual(0);
     });
 
     it('calls the onReset function', function () {

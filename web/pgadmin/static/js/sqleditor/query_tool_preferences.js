@@ -78,7 +78,7 @@ function updateUIPreferences(sqlEditor) {
     .find('i')
     .attr('title',
       shortcut_accesskey_title('Connection status (click for details)',
-                            preferences.btn_conn_status));
+        preferences.btn_conn_status));
 
   /* Accessed using ctrl,atl,shift and key */
   $el.find('#btn-flash')
@@ -104,20 +104,6 @@ function updateUIPreferences(sqlEditor) {
   $el.find('#btn-rollback')
     .attr('title',
       shortcut_title('Rollback',preferences.rollback_transaction));
-
-  /* Set Auto-commit and auto-rollback on query editor */
-  if (preferences.auto_commit) {
-    $el.find('.auto-commit').removeClass('visibility-hidden');
-  }
-  else {
-    $el.find('.auto-commit').addClass('visibility-hidden');
-  }
-  if (preferences.auto_rollback) {
-    $el.find('.auto-rollback').removeClass('visibility-hidden');
-  }
-  else {
-    $el.find('.auto-rollback').addClass('visibility-hidden');
-  }
 
   /* Set explain options on query editor */
   if (preferences.explain_verbose){
@@ -166,8 +152,8 @@ function updateUIPreferences(sqlEditor) {
 
     // Calling it again in specified interval
     sqlEditor.connIntervalId =  setInterval(
-        SqlEditorUtils.fetchConnectionStatus.bind(null, sqlEditor.handler, $conn_status, $status_el),
-        preferences.connection_status_fetch_time * 1000
+      SqlEditorUtils.fetchConnectionStatus.bind(null, sqlEditor.handler, $conn_status, $status_el),
+      preferences.connection_status_fetch_time * 1000
     );
   }
   else {
@@ -187,7 +173,9 @@ function updateUIPreferences(sqlEditor) {
   sqlEditor.query_tool_obj.refresh();
 
   /* Render history to reflect Font size change */
-  sqlEditor.render_history_grid();
+  sqlEditor.historyComponent.setEditorPref({
+    'sql_font_size' : sql_font_size,
+  });
 }
 
 export {updateUIPreferences};

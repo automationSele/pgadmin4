@@ -98,14 +98,14 @@ module.exports =  Alertify.dialog('createModeDlg', function() {
         contentType: 'application/x-download; charset=utf-8',
         async: false,
       })
-      .done(function(resp) {
-        var data = resp.data.result;
-        if (data['Code'] === 1) {
-          is_exist = true;
-        } else {
-          is_exist = false;
-        }
-      });
+        .done(function(resp) {
+          var data = resp.data.result;
+          if (data['Code'] === 1) {
+            is_exist = true;
+          } else {
+            is_exist = false;
+          }
+        });
       return is_exist;
     },
     check_permission: function(path) {
@@ -125,19 +125,19 @@ module.exports =  Alertify.dialog('createModeDlg', function() {
         contentType: 'application/json; charset=utf-8',
         async: false,
       })
-      .done(function(resp) {
-        var data = resp.data.result;
-        if (data.Code === 1) {
-          permission = true;
-        } else {
+        .done(function(resp) {
+          var data = resp.data.result;
+          if (data.Code === 1) {
+            permission = true;
+          } else {
+            $('.file_manager_ok').addClass('disabled');
+            Alertify.error(data.Error);
+          }
+        })
+        .fail(function() {
           $('.file_manager_ok').addClass('disabled');
-          Alertify.error(data.Error);
-        }
-      })
-      .fail(function() {
-        $('.file_manager_ok').addClass('disabled');
-        Alertify.error(gettext('Error occurred while checking access permission.'));
-      });
+          Alertify.error(gettext('Error occurred while checking access permission.'));
+        });
       return permission;
     },
     callback: function(closeEvent) {
@@ -146,7 +146,27 @@ module.exports =  Alertify.dialog('createModeDlg', function() {
           file_data = {
             'path': $('.currentpath').val(),
           },
-          innerbody;
+          innerbody,
+          sep = '/',
+          ext = $('.allowed_file_types select').val();
+
+        /*
+           Add the file extension if necessary, and if the file type selector
+           isn't set to "All Files". If there's no . at all in the path, or
+           there is a . already but it's not following the last /, AND the
+           extension isn't *, then we add the extension.
+         */
+
+        if (navigator.platform.toUpperCase().indexOf('WIN')!==-1) {
+          sep = '\\';
+        }
+
+        if ((!newFile.includes('.') ||
+            newFile.split('.').pop().includes(sep)) &&
+            ext != '*') {
+          newFile = newFile + '.' + ext;
+          $('.storage_dialog #uploader .input-path').val(newFile);
+        }
 
         if (!this.check_permission(newFile)) {
           closeEvent.cancel = true;

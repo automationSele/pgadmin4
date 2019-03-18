@@ -197,33 +197,33 @@ define('pgadmin.node.database', [
                 url: obj.generate_url(i, 'connect', d, true),
                 type:'DELETE',
               })
-              .done(function(res) {
-                if (res.success == 1) {
-                  var prv_i = t.parent(i);
-                  Alertify.success(res.info);
-                  t.removeIcon(i);
-                  data.connected = false;
-                  data.icon = 'icon-database-not-connected';
-                  t.addIcon(i, {icon: data.icon});
-                  t.unload(i);
-                  t.setInode(i);
-                  setTimeout(function() {
-                    t.select(prv_i);
-                  }, 10);
+                .done(function(res) {
+                  if (res.success == 1) {
+                    var prv_i = t.parent(i);
+                    Alertify.success(res.info);
+                    t.removeIcon(i);
+                    data.connected = false;
+                    data.icon = 'icon-database-not-connected';
+                    t.addIcon(i, {icon: data.icon});
+                    t.unload(i);
+                    t.setInode(i);
+                    setTimeout(function() {
+                      t.select(prv_i);
+                    }, 10);
 
-                } else {
-                  try {
-                    Alertify.error(res.errormsg);
-                  } catch (e) {
-                    console.warn(e.stack || e);
+                  } else {
+                    try {
+                      Alertify.error(res.errormsg);
+                    } catch (e) {
+                      console.warn(e.stack || e);
+                    }
+                    t.unload(i);
                   }
+                })
+                .fail(function(xhr, status, error) {
+                  Alertify.pgRespErrorNotify(xhr, error);
                   t.unload(i);
-                }
-              })
-              .fail(function(xhr, status, error) {
-                Alertify.pgRespErrorNotify(xhr, error);
-                t.unload(i);
-              });
+                });
             },
             function() { return true; });
 
@@ -397,13 +397,13 @@ define('pgadmin.node.database', [
           group: gettext('Security'), mode: ['edit', 'create'],
           canAdd: true, canDelete: true, control: 'unique-col-collection',
         },{
-          id: 'variables', label: gettext('Parameters'), type: 'collection',
+          id: 'variables', label: '', type: 'collection',
           model: pgBrowser.Node.VariableModel.extend({keys:['name', 'role']}), editable: false,
           group: gettext('Parameters'), mode: ['edit', 'create'],
           canAdd: true, canEdit: false, canDelete: true, hasRole: true,
           control: Backform.VariableCollectionControl, node: 'role',
         },{
-          id: 'seclabels', label: gettext('Security Labels'),
+          id: 'seclabels', label: gettext('Security labels'),
           model: pgBrowser.SecLabelModel,
           editable: false, type: 'collection', canEdit: false,
           group: gettext('Security'), canDelete: true,
@@ -415,25 +415,25 @@ define('pgadmin.node.database', [
           mode: ['edit'],
           schema:[{
             id: 'deftblacl', model: pgBrowser.Node.PrivilegeRoleModel.extend(
-              {privileges: ['a', 'r', 'w', 'd', 'D', 'x', 't']}), label: gettext('Default Privileges: Tables'),
+              {privileges: ['a', 'r', 'w', 'd', 'D', 'x', 't']}), label: '',
             editable: false, type: 'collection', group: gettext('Tables'),
             mode: ['edit', 'create'], control: 'unique-col-collection',
             canAdd: true, canDelete: true, uniqueCol : ['grantee', 'grantor'],
           },{
             id: 'defseqacl', model: pgBrowser.Node.PrivilegeRoleModel.extend(
-              {privileges: ['r', 'w', 'U']}), label: gettext('Default Privileges: Sequences'),
+              {privileges: ['r', 'w', 'U']}), label: '',
             editable: false, type: 'collection', group: gettext('Sequences'),
             mode: ['edit', 'create'], control: 'unique-col-collection',
             canAdd: true, canDelete: true, uniqueCol : ['grantee', 'grantor'],
           },{
             id: 'deffuncacl', model: pgBrowser.Node.PrivilegeRoleModel.extend(
-              {privileges: ['X']}), label: gettext('Default Privileges: Functions'),
+              {privileges: ['X']}), label: '',
             editable: false, type: 'collection', group: gettext('Functions'),
             mode: ['edit', 'create'], control: 'unique-col-collection',
             canAdd: true, canDelete: true, uniqueCol : ['grantee', 'grantor'],
           },{
             id: 'deftypeacl', model: pgBrowser.Node.PrivilegeRoleModel.extend(
-              {privileges: ['U']}),  label: gettext('Default Privileges: Types'),
+              {privileges: ['U']}),  label: '',
             editable: false, type: 'collection', group: 'deftypesacl_group',
             mode: ['edit', 'create'], control: 'unique-col-collection',
             canAdd: true, canDelete: true, uniqueCol : ['grantee', 'grantor'],

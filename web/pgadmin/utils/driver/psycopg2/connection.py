@@ -950,6 +950,10 @@ WHERE
             return False, str(cur)
         query_id = random.randint(1, 9999999)
 
+        encoding = self.python_encoding
+
+        query = query.encode(encoding)
+
         current_app.logger.log(
             25,
             u"Execute (async) for server #{server_id} - {conn_id} (Query-id: "

@@ -380,7 +380,7 @@ define('pgadmin.node.type', [
             return m.get('typtype') === 'c';
           },
         },{
-          id: 'enum', label: gettext('Enumeration Type'),
+          id: 'enum', label: gettext('Enumeration type'),
           model: EnumModel, editable: true, type: 'collection',
           group: gettext('Definition'), mode: ['edit', 'create'],
           canAdd: true, canEdit: false, canDelete: function(m) {
@@ -435,12 +435,12 @@ define('pgadmin.node.type', [
                   cache: false,
                   data: {'typname' : l_typname},
                 })
-                .done(function(res) {
-                  result = res.data;
-                })
-                .fail(function() {
-                  self.model.trigger('pgadmin:view:fetch:error', self.model, self.field);
-                });
+                  .done(function(res) {
+                    result = res.data;
+                  })
+                  .fail(function() {
+                    self.model.trigger('pgadmin:view:fetch:error', self.model, self.field);
+                  });
                 //
               }
               return result;
@@ -503,13 +503,13 @@ define('pgadmin.node.type', [
                   cache: false,
                   data: {'name' : name},
                 })
-                .done(function(res) {
-                  result = res.data;
-                })
-                .fail(function() {
-                  self.model.trigger('pgadmin:view:fetch:error',
-                    self.model, self.field);
-                });
+                  .done(function(res) {
+                    result = res.data;
+                  })
+                  .fail(function() {
+                    self.model.trigger('pgadmin:view:fetch:error',
+                      self.model, self.field);
+                  });
               }
               return result;
             },
@@ -528,24 +528,24 @@ define('pgadmin.node.type', [
                 !_.isUndefined(l_opcname) && l_opcname != '') {
                 var node = this.field.get('schema_node'),
                   _url = node.generate_url.apply(
-                      node, [
-                        null, 'get_stypediff',
-                        this.field.get('node_data'), false,
-                        this.field.get('node_info'),
-                      ]);
+                    node, [
+                      null, 'get_stypediff',
+                      this.field.get('node_data'), false,
+                      this.field.get('node_info'),
+                    ]);
                 $.ajax({
                   async: false,
                   url: _url,
                   cache: false,
                   data: {'typname' : l_typname, 'opcname': l_opcname},
                 })
-                .done(function(res) {
-                  result = res.data;
-                })
-                .fail(function() {
-                  self.model.trigger('pgadmin:view:fetch:error',
+                  .done(function(res) {
+                    result = res.data;
+                  })
+                  .fail(function() {
+                    self.model.trigger('pgadmin:view:fetch:error',
                       self.model, self.field);
-                });
+                  });
               }
               return result;
             },
@@ -781,7 +781,7 @@ define('pgadmin.node.type', [
             return !(m.get('typtype') === 'p');
           },
         },{
-          id: 'seclabels', label: gettext('Security Labels'),
+          id: 'seclabels', label: gettext('Security labels'),
           model: pgBrowser.SecLabelModel, editable: false, type: 'collection',
           group: 'security', mode: ['edit', 'create'],
           min_version: 90100, canEdit: false, canDelete: true,

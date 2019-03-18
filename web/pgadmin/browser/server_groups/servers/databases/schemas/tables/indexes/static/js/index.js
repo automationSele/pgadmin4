@@ -24,9 +24,6 @@ define('pgadmin.node.index', [
         node: 'index',
         label: gettext('Indexes'),
         type: 'coll-index',
-        sqlAlterHelp: 'sql-alterindex.html',
-        sqlCreateHelp: 'sql-createindex.html',
-        dialogHelp: url_for('help.static', {'filename': 'index_dialog.html'}),
         columns: ['name', 'description'],
         hasStatistics: true,
         statsPrettifyFields: [gettext('Size'), gettext('Index size')],
@@ -208,8 +205,8 @@ define('pgadmin.node.index', [
         _.isNull(parent_model.get('amname')) ||
           String(parent_model.get('amname')).replace(/^\s+|\s+$/g, '') == '' ||
           parent_model.get('amname') === 'btree') {
-            // We need to set nulls to true if sort_order is set to desc
-            // nulls first is default for desc
+        // We need to set nulls to true if sort_order is set to desc
+        // nulls first is default for desc
         if(m.get('sort_order') == true && m.previous('sort_order') ==  false) {
           setTimeout(function() { m.set('nulls', true); }, 10);
         }
@@ -227,6 +224,7 @@ define('pgadmin.node.index', [
       collection_type: ['coll-table', 'coll-view'],
       sqlAlterHelp: 'sql-alterindex.html',
       sqlCreateHelp: 'sql-createindex.html',
+      dialogHelp: url_for('help.static', {'filename': 'index_dialog.html'}),
       type: 'index',
       label: gettext('Index'),
       hasSQL:  true,

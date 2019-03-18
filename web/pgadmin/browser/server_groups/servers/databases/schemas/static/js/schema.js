@@ -36,20 +36,20 @@ define('pgadmin.node.schema', [
             data;
           m.trigger('pgadmin-view:fetching', m, self.field);
 
-        // fetch default values for autovacuum fields
+          // fetch default values for autovacuum fields
           $.ajax({
             async: false,
             url: full_url,
           })
-          .done(function (res) {
-            data = res;
-          })
-          .fail(function() {
-            m.trigger('pgadmin-view:fetch:error', m, self.field);
-          });
+            .done(function (res) {
+              data = res;
+            })
+            .fail(function() {
+              m.trigger('pgadmin-view:fetch:error', m, self.field);
+            });
           m.trigger('pgadmin-view:fetched', m, self.field);
 
-        // Add fetched models into collection
+          // Add fetched models into collection
           if (data && _.isArray(data)) {
             m.get(self.field.get('name')).reset(data, {silent: true});
           }
@@ -60,7 +60,7 @@ define('pgadmin.node.schema', [
         var self = this,
           attributes = self.field.attributes;
 
-      // remove grid
+        // remove grid
         if(self.grid) {
           self.grid.remove();
           delete self.grid;
@@ -74,17 +74,17 @@ define('pgadmin.node.schema', [
             '  <label class="control-label col-sm-4"><%-label%></label>',
             '</div>'].join('\n')),
           gridBody = $('<div class="pgadmin-control-group backgrid form-group col-12 object subnode"></div>').append(
-              gridHeader(attributes)
-              );
+            gridHeader(attributes)
+          );
 
-      // Initialize a new Grid instance
+        // Initialize a new Grid instance
         var grid = self.grid = new Backgrid.Grid({
           columns: self.grid_columns,
           collection: self.model.get(self.field.get('name')),
           className: 'backgrid table-bordered table-noouter-border table-hover',
         });
 
-      // render grid
+        // render grid
         self.$el.append($(gridBody).append(grid.render().$el));
 
         return self;
@@ -127,7 +127,7 @@ define('pgadmin.node.schema', [
     },
   });
 
-   // Extend the browser's collection class for VacuumSettingsModel
+  // Extend the browser's collection class for VacuumSettingsModel
   Backform.VacuumSettingsSchema = [{
     id: 'spacer_ctrl', group: gettext('Table'), mode: ['edit', 'create'], type: 'spacer',
   },{
@@ -168,7 +168,7 @@ define('pgadmin.node.schema', [
       return true;
     },
   },{
-    id: 'vacuum_table', label: gettext('Vacuum Table'),
+    id: 'vacuum_table', label: '',
     model: Backform.VacuumTableModel, editable: false, type: 'collection',
     canEdit: true, group: gettext('Table'),
     mode: ['edit', 'create'], url: 'get_table_vacuum',
@@ -187,7 +187,7 @@ define('pgadmin.node.schema', [
           }, headerCell: Backgrid.Extension.CustomHeaderCell,
         },
         {
-          name: 'setting', label: gettext('Default value'),
+          name: 'setting', label: gettext('Default'),
           cellHeaderClasses:'width_percent_30',
           headerCell: Backgrid.Extension.CustomHeaderCell,
           cellFunction: Backform.cellFunction, editable: false,
@@ -196,10 +196,10 @@ define('pgadmin.node.schema', [
     }),
     deps: ['autovacuum_enabled'],
   },{
-    id: 'spacer_ctrl', group: gettext('Toast Table'), mode: ['edit', 'create'], type: 'spacer',
+    id: 'spacer_ctrl', group: gettext('TOAST table'), mode: ['edit', 'create'], type: 'spacer',
   },{
     id: 'toast_autovacuum', label: gettext('Custom auto-vacuum?'),
-    group: gettext('Toast Table'), mode: ['edit', 'create'],
+    group: gettext('TOAST table'), mode: ['edit', 'create'],
     type: 'switch',
     disabled: function(m) {
       // We need to check additional condition to toggle enable/disable
@@ -215,7 +215,7 @@ define('pgadmin.node.schema', [
     },
   },{
     id: 'toast_autovacuum_enabled', label: gettext('Enabled?'),
-    group: gettext('Toast Table'), mode: ['edit', 'create'],
+    group: gettext('TOAST table'), mode: ['edit', 'create'],
     type: 'switch',
     deps:['toast_autovacuum'],
     disabled: function(m) {
@@ -234,11 +234,11 @@ define('pgadmin.node.schema', [
       return true;
     },
   },{
-    id: 'vacuum_toast', label: gettext('Vacuum Toast Table'),
+    id: 'vacuum_toast', label: '',
     model: Backform.VacuumTableModel, type: 'collection', editable: function(m) {
       return m.isNew();
     },
-    canEdit: true, group: gettext('Toast Table'),
+    canEdit: true, group: gettext('TOAST table'),
     mode: ['properties', 'edit', 'create'], url: 'get_toast_table_vacuum',
     control: Backform.VacuumCollectionControl.extend({
       grid_columns :[
@@ -256,7 +256,7 @@ define('pgadmin.node.schema', [
           },
         },
         {
-          name: 'setting', label: gettext('Default value'),
+          name: 'setting', label: gettext('Default'),
           cellHeaderClasses:'width_percent_30',
           headerCell: Backgrid.Extension.CustomHeaderCell,
           cellFunction: Backform.cellFunction, editable: false,
@@ -373,44 +373,44 @@ define('pgadmin.node.schema', [
         },{
           id: 'nspacl', label: gettext('Privileges'),
           model: pgBrowser.Node.PrivilegeRoleModel.extend(
-          {privileges: ['C', 'U']}), uniqueCol : ['grantee', 'grantor'],
+            {privileges: ['C', 'U']}), uniqueCol : ['grantee', 'grantor'],
           editable: false, type: 'collection', group: gettext('Security'),
           mode: ['edit', 'create'],
           canAdd: true, canDelete: true, control: 'unique-col-collection',
         },{
-          id: 'seclabels', label: gettext('Security Labels'),
+          id: 'seclabels', label: gettext('Security labels'),
           model: pgBrowser.SecLabelModel, editable: false, type: 'collection',
           group: gettext('Security'), mode: ['edit', 'create'],
           min_version: 90200, canAdd: true,
           canEdit: false, canDelete: true, control: 'unique-col-collection',
         },{
-          type: 'nested', control: 'tab', group: gettext('Default Privileges'),
+          type: 'nested', control: 'tab', group: gettext('Default privileges'),
           mode: ['create','edit'],
           schema:[{
             id: 'deftblacl', model: pgBrowser.Node.PrivilegeRoleModel.extend(
               {privileges: ['a', 'r', 'w', 'd', 'D', 'x', 't']}),
-            label: gettext('Default Privileges: Tables'),
+            label: '',
             editable: false, type: 'collection', group: gettext('Tables'),
             mode: ['edit', 'create'], control: 'unique-col-collection',
             canAdd: true, canDelete: true, uniqueCol : ['grantee', 'grantor'],
           },{
             id: 'defseqacl', model: pgBrowser.Node.PrivilegeRoleModel.extend(
               {privileges: ['r', 'w', 'U']}),
-            label: gettext('Default Privileges: Sequences'),
+            label: '',
             editable: false, type: 'collection', group: gettext('Sequences'),
             mode: ['edit', 'create'], control: 'unique-col-collection',
             canAdd: true, canDelete: true, uniqueCol : ['grantee', 'grantor'],
           },{
             id: 'deffuncacl', model: pgBrowser.Node.PrivilegeRoleModel.extend(
               {privileges: ['X']}),
-            label: gettext('Default Privileges: Functions'),
+            label: '',
             editable: false, type: 'collection', group: gettext('Functions'),
             mode: ['edit', 'create'], control: 'unique-col-collection',
             canAdd: true, canDelete: true, uniqueCol : ['grantee', 'grantor'],
           },{
             id: 'deftypeacl', model: pgBrowser.Node.PrivilegeRoleModel.extend(
               {privileges: ['U']}),
-            label: gettext('Default Privileges: Types'),
+            label: '',
             editable: false, type: 'collection', group: gettext('Types'),
             mode: ['edit', 'create'], control: 'unique-col-collection',
             canAdd: true, canDelete: true, uniqueCol : ['grantee', 'grantor'],
