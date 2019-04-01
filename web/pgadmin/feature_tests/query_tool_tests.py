@@ -21,7 +21,7 @@ import config
 from .locators import QueryToolLocatorsCss
 
 
-class QueryToolFeatureTest():
+class QueryToolFeatureTest(BaseFeatureTest):
     """
         This feature test will test the different query tool features.
     """
@@ -183,7 +183,7 @@ SELECT generate_series(1, {}) as id1, 'dummy' as id2""".format(
 
         # wait for header of the table to be visible
         wait.until(EC.visibility_of_element_located(
-            (By.XPATH,'//div[@class="slick-header-columns"]')))
+            (By.XPATH, '//div[@class="slick-header-columns"]')))
 
         wait.until(EC.presence_of_element_located(
             (By.XPATH,
@@ -209,7 +209,8 @@ SELECT generate_series(1, {}) as id1, 'dummy' as id2""".format(
 
         # wait for header of the table to be visible
         wait.until(EC.visibility_of_element_located(
-            (By.XPATH,'//div[@class="slick-header-columns"]')))
+            (By.XPATH, '//div[@class="slick-header-columns"]')))
+
         # wait for first row to contain value
         wait.until(EC.presence_of_element_located(
             (By.XPATH,
@@ -234,7 +235,7 @@ SELECT generate_series(1, {}) as id1, 'dummy' as id2""".format(
 
         # wait for header of the table to be visible
         wait.until(EC.visibility_of_element_located(
-            (By.XPATH,'//div[@class="slick-header-columns"]')))
+            (By.XPATH, '//div[@class="slick-header-columns"]')))
 
         wait.until(EC.presence_of_element_located(
             (By.XPATH,
@@ -352,15 +353,16 @@ CREATE TABLE public.{}();""".format(table_name)
 
         self.page.fill_codemirror_area_with(query)
 
+        # open auto commit option and disable it
         query_op = self.page.find_by_css_selector(
             QueryToolLocatorsCss.btn_query_dropdown)
         query_op.click()
-
         self.page.find_by_css_selector(
             QueryToolLocatorsCss.btn_auto_commit).click()
-
+        # close option
         query_op.click()
 
+        # execute query
         self.page.find_by_css_selector(
             QueryToolLocatorsCss.btn_execute_query).click()
 
@@ -371,6 +373,7 @@ CREATE TABLE public.{}();""".format(table_name)
             'contains(string(), "CREATE TABLE")]'
         )
 
+        # do the ROLLBACK and check if the table is present or not
         self._clear_query_tool()
         query = """-- 1. (Done) Disable auto commit.
 -- 2. (Done) Create table in public schema.
@@ -412,9 +415,19 @@ SELECT relname FROM pg_class
                              "and without any explicit commit.".format(
             table_name
         )
+        # again roll back so that the auto commit drop down is enabled
+        query = """-- 1. (Done) Disable auto commit.
+        -- 2. (Done) Create table in public schema.
+        -- 3. ROLLBACK transaction.
+        -- 4. Check if table is *NOT* created.
+        ROLLBACK;"""
+        self.page.fill_codemirror_area_with(query)
+        self.page.find_by_css_selector(
+            QueryToolLocatorsCss.btn_execute_query).click()
+
+        self.page.wait_for_query_tool_loading_indicator_to_disappear()
 
     def _query_tool_auto_commit_enabled(self):
-
         query = """-- 1. Enable auto commit.
 -- 2. END any open transaction.
 -- 3. Create table in public schema.
@@ -522,11 +535,9 @@ END;"""
             QueryToolLocatorsCss.btn_query_dropdown)
         query_op.click()
 
-        self.page.find_by_css_selector(
-            QueryToolLocatorsCss.btn_auto_rollback).click()
-
-        self.page.find_by_css_selector(
-            QueryToolLocatorsCss.btn_auto_commit).click()
+        # uncheckt auto commit and check auto-rollback
+        self.uncheck_execute_option('auto_commit')
+        self.check_execute_option('auto_rollback')
 
         query_op.click()
 
@@ -631,38 +642,19 @@ SELECT 1, pg_sleep(300)"""
 
         self.page.fill_codemirror_area_with(query)
 
+        # query_button drop can be disabled so enable
+        commit_button = self.page.find_by_css_selector("#btn-commit")
+        if not commit_button.get_attribute('disabled'):
+            commit_button.click()
+
         query_op = self.page.find_by_css_selector(
             QueryToolLocatorsCss.btn_query_dropdown)
         query_op.click()
 
-        auto_rollback_btn = self.page.find_by_css_selector(
-            QueryToolLocatorsCss.btn_auto_commit)
-
-        auto_rollback_check = auto_rollback_btn.find_element_by_tag_name("i")
-
-        # if auto rollback is enabled then 'i' element will
-        # have 'auto-rollback fa fa-check' classes
-        # if auto rollback is disabled then 'i' element will
-        # have 'auto-rollback fa fa-check visibility-hidden' classes
-
-        if 'auto-rollback fa fa-check' == str(
-           auto_rollback_check.get_attribute('class')):
-            auto_rollback_btn.click()
-
-        auto_commit_btn = self.page.find_by_css_selector(
-            QueryToolLocatorsCss.btn_auto_commit)
-
-        auto_commit_check = auto_commit_btn.find_element_by_tag_name("i")
-
-        # if auto commit is enabled then 'i' element will
-        # have 'auto-commit fa fa-check' classes
-        # if auto commit is disabled then 'i' element will
-        # have 'auto-commit fa fa-check visibility-hidden' classes
-
-        if 'auto-commit fa fa-check visibility-hidden' == str(
-           auto_commit_check.get_attribute('class')):
-            auto_commit_btn.click()
-
+        # enable auto-commit and disable auto-rollback
+        self.check_execute_option('auto_commit')
+        self.uncheck_execute_option('auto_rollback')
+        # close drop down
         query_op.click()
 
         self.page.find_by_css_selector(
@@ -756,7 +748,7 @@ SELECT 1, pg_sleep(300)"""
             show_jit = pg_cursor.fetchone()
             if show_jit[0] == 'on':
                 jit_enabled = True
-        except:
+        except Exception as e:
             pass
 
         is_edb = False
@@ -812,6 +804,38 @@ SELECT 1, pg_sleep(300)"""
         canvas.find_element_by_xpath("//*[contains(string(), 'JIT')]")
 
         self._clear_query_tool()
+
+    def check_execute_option(self, option):
+        """"This function will check auto commit or auto roll back based on
+        user input. If button is already checked, no action will be taken"""
+        if option == 'auto_commit':
+            check_status = self.driver.find_element_by_css_selector(
+                QueryToolLocatorsCss.btn_auto_commit_check_status)
+            if 'visibility-hidden' in check_status.get_attribute('class'):
+                self.page.find_by_css_selector(QueryToolLocatorsCss.
+                                               btn_auto_commit).click()
+        if option == 'auto_rollback':
+            check_status = self.driver.find_element_by_css_selector(
+                QueryToolLocatorsCss.btn_auto_rollback_check_status)
+            if 'visibility-hidden' in check_status.get_attribute('class'):
+                self.page.find_by_css_selector(QueryToolLocatorsCss.
+                                               btn_auto_rollback).click()
+
+    def uncheck_execute_option(self, option):
+        """"This function will uncheck auto commit or auto roll back based on
+        user input. If button is already unchecked, no action will be taken"""
+        if option == 'auto_commit':
+            check_status = self.driver.find_element_by_css_selector(
+                QueryToolLocatorsCss.btn_auto_commit_check_status)
+            if 'visibility-hidden' not in check_status.get_attribute('class'):
+                self.page.find_by_css_selector(QueryToolLocatorsCss.
+                                               btn_auto_commit).click()
+        if option == 'auto_rollback':
+            check_status = self.driver.find_element_by_css_selector(
+                QueryToolLocatorsCss.btn_auto_rollback_check_status)
+            if 'visibility-hidden' not in check_status.get_attribute('class'):
+                self.page.find_by_css_selector(QueryToolLocatorsCss.
+                                               btn_auto_rollback).click()
 
 
 class WaitForAnyElementWithText(object):

@@ -31,10 +31,6 @@ class BrowserToolBarFeatureTest(BaseFeatureTest):
 
     def before(self):
         self.page.wait_for_spinner_to_disappear()
-
-        print("Debug: going to check screen shot from before")
-        self._screenshot()
-        print("Debug: screenshot is printed from browser tools test")
         self.page.add_server(self.server)
         self.test_table_name = "test_table" + str(random.randint(1000, 3000))
         test_utils.create_table(self.server, self.test_db,
@@ -86,7 +82,7 @@ class BrowserToolBarFeatureTest(BaseFeatureTest):
         self.page.select_tree_item(self.test_db)
         self.page.toggle_open_tree_item('Schemas')
         self.page.toggle_open_tree_item('public')
-        self.page.toggle_open_trees_node()
+        self.page.toggle_open_tables_node()
         self.page.select_tree_item(self.test_table_name)
 
         retry_count = 0

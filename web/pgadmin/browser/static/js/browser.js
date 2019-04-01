@@ -11,9 +11,9 @@ define('pgadmin.browser', [
   'sources/tree/tree',
   'sources/gettext', 'sources/url_for', 'require', 'jquery', 'underscore', 'underscore.string',
   'bootstrap', 'sources/pgadmin', 'pgadmin.alertifyjs', 'bundled_codemirror',
-  'sources/check_node_visibility', './toolbar', 'pgadmin.browser.utils', 'wcdocker',
-  'jquery.contextmenu', 'jquery.aciplugin', 'jquery.acitree', 'pgadmin.browser.preferences',
-  'pgadmin.browser.messages',
+  'sources/check_node_visibility', './toolbar', 'pgadmin.help', 'pgadmin.browser.utils',
+  'wcdocker', 'jquery.contextmenu', 'jquery.aciplugin', 'jquery.acitree',
+  'pgadmin.browser.preferences', 'pgadmin.browser.messages',
   'pgadmin.browser.menu', 'pgadmin.browser.panel',
   'pgadmin.browser.error', 'pgadmin.browser.frame',
   'pgadmin.browser.node', 'pgadmin.browser.collection',
@@ -21,8 +21,9 @@ define('pgadmin.browser', [
   'pgadmin.browser.keyboard', 'sources/tree/pgadmin_tree_save_state',
 ], function(
   tree,
-  gettext, url_for, require, $, _, S, Bootstrap, pgAdmin, Alertify,
-  codemirror, checkNodeVisibility, toolBar
+  gettext, url_for, require, $, _, S,
+  Bootstrap, pgAdmin, Alertify, codemirror,
+  checkNodeVisibility, toolBar, help
 ) {
   window.jQuery = window.$ = $;
   // Some scripts do export their object in the window only.
@@ -279,19 +280,19 @@ define('pgadmin.browser', [
       scripts[n].push({'name': m, 'path': p, loaded: false});
     },
     // Build the default layout
-    buildDefaultLayout: function() {
-      var browserPanel = this.docker.addPanel('browser', wcDocker.DOCK.LEFT);
-      var dashboardPanel = this.docker.addPanel(
+    buildDefaultLayout: function(docker) {
+      var browserPanel = docker.addPanel('browser', wcDocker.DOCK.LEFT);
+      var dashboardPanel = docker.addPanel(
         'dashboard', wcDocker.DOCK.RIGHT, browserPanel);
-      this.docker.addPanel('properties', wcDocker.DOCK.STACKED, dashboardPanel, {
+      docker.addPanel('properties', wcDocker.DOCK.STACKED, dashboardPanel, {
         tabOrientation: wcDocker.TAB.TOP,
       });
-      this.docker.addPanel('sql', wcDocker.DOCK.STACKED, dashboardPanel);
-      this.docker.addPanel(
+      docker.addPanel('sql', wcDocker.DOCK.STACKED, dashboardPanel);
+      docker.addPanel(
         'statistics', wcDocker.DOCK.STACKED, dashboardPanel);
-      this.docker.addPanel(
+      docker.addPanel(
         'dependencies', wcDocker.DOCK.STACKED, dashboardPanel);
-      this.docker.addPanel(
+      docker.addPanel(
         'dependents', wcDocker.DOCK.STACKED, dashboardPanel);
     },
     // Enable/disable menu options
@@ -350,15 +351,33 @@ define('pgadmin.browser', [
         $obj_mnu.append(create_submenu.$el);
       }
     },
-    save_current_layout: function(obj) {
-      if(obj.docker) {
-        var state = obj.docker.save();
-        var settings = { setting: 'Browser/Layout', value: state };
+    save_current_layout: function(layout_id, docker) {
+      if(docker) {
+        var layout = docker.save();
+        var settings = { setting: layout_id, value: layout };
         $.ajax({
           type: 'POST',
           url: url_for('settings.store_bulk'),
           data: settings,
         });
+      }
+    },
+    restore_layout: function(docker, layout, defaultLayoutCallback) {
+      // Try to restore the layout if there is one
+      if (layout != '') {
+        try {
+          docker.restore(layout);
+        }
+        catch(err) {
+          docker.clear();
+          if(defaultLayoutCallback) {
+            defaultLayoutCallback(docker);
+          }
+        }
+      } else {
+        if(defaultLayoutCallback) {
+          defaultLayoutCallback(docker);
+        }
       }
     },
     init: function() {
@@ -394,33 +413,10 @@ define('pgadmin.browser', [
 
         // Stored layout in database from the previous session
         var layout = pgBrowser.utils.layout;
+        obj.restore_layout(obj.docker, layout, obj.buildDefaultLayout.bind(obj));
 
-        // Try to restore the layout if there is one
-        if (layout != '') {
-          try {
-            obj.docker.restore(layout);
-          }
-          catch(err) {
-            obj.docker.clear();
-            obj.buildDefaultLayout();
-          }
-        } else {
-          obj.buildDefaultLayout();
-        }
-
-        // Listen to panel attach/detach event so that last layout will be remembered
-        _.each(obj.panels, function(panel) {
-          if (panel.panel) {
-            panel.panel.on(wcDocker.EVENT.ATTACHED, function() {
-              obj.save_current_layout(obj);
-            });
-            panel.panel.on(wcDocker.EVENT.DETACHED, function() {
-              obj.save_current_layout(obj);
-            });
-            panel.panel.on(wcDocker.EVENT.MOVE_ENDED, function() {
-              obj.save_current_layout(obj);
-            });
-          }
+        obj.docker.on(wcDocker.EVENT.LAYOUT_CHANGED, function() {
+          obj.save_current_layout('Browser/Layout', obj.docker);
         });
       }
 
@@ -653,14 +649,7 @@ define('pgadmin.browser', [
           baseUrl = pgBrowser.utils.edbas_help_path;
         }
 
-        var major = Math.floor(server.version / 10000),
-          minor = Math.floor(server.version / 100) - (major * 100);
-
-        baseUrl = baseUrl.replace('$VERSION$', major + '.' + minor);
-        if (!S(baseUrl).endsWith('/')) {
-          baseUrl = baseUrl + '/';
-        }
-        var fullUrl = baseUrl + url;
+        var fullUrl = help.getHelpUrl(baseUrl, url, server.version);
 
         window.open(fullUrl, 'postgres_help');
       } else if(type == 'dialog_help') {

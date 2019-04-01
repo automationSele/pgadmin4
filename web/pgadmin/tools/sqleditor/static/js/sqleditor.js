@@ -76,6 +76,7 @@ define('tools.querytool', [
       this.preferences = browser.get_preferences_for_module('sqleditor');
       this.handler.preferences = this.preferences;
       this.connIntervalId = null;
+      this.layout = opts.layout;
     },
 
     // Bind all the events
@@ -149,6 +150,18 @@ define('tools.querytool', [
       }
     },
 
+    buildDefaultLayout: function(docker) {
+      let sql_panel_obj = docker.addPanel('sql_panel', wcDocker.DOCK.TOP);
+
+      docker.addPanel('scratch', wcDocker.DOCK.RIGHT, sql_panel_obj);
+      docker.addPanel('history', wcDocker.DOCK.STACKED, sql_panel_obj);
+
+      let data_output_panel = docker.addPanel('data_output', wcDocker.DOCK.BOTTOM);
+      docker.addPanel('explain', wcDocker.DOCK.STACKED, data_output_panel);
+      docker.addPanel('messages', wcDocker.DOCK.STACKED, data_output_panel);
+      docker.addPanel('notifications', wcDocker.DOCK.STACKED, data_output_panel);
+    },
+
     // This function is used to render the template.
     render: function() {
       var self = this;
@@ -170,7 +183,7 @@ define('tools.querytool', [
 
 
       // Create main wcDocker instance
-      var main_docker = new wcDocker(
+      self.docker = new wcDocker(
         '#editor-panel', {
           allowContextMenu: true,
           allowCollapse: false,
@@ -181,8 +194,8 @@ define('tools.querytool', [
           theme: 'webcabin.overrides.css',
         });
 
-      self.docker = main_docker;
 
+      // Create the panels
       var sql_panel = new pgAdmin.Browser.Panel({
         name: 'sql_panel',
         title: gettext('Query Editor'),
@@ -192,45 +205,6 @@ define('tools.querytool', [
         isPrivate: true,
       });
 
-      sql_panel.load(main_docker);
-      self.sql_panel_obj = main_docker.addPanel('sql_panel', wcDocker.DOCK.TOP);
-
-      var text_container = $('<textarea id="sql_query_tool" tabindex: "-1"></textarea>');
-      var output_container = $('<div id="output-panel" tabindex: "0"></div>').append(text_container);
-      self.sql_panel_obj.$container.find('.pg-panel-content').append(output_container);
-
-      self.query_tool_obj = CodeMirror.fromTextArea(text_container.get(0), {
-        tabindex: '0',
-        lineNumbers: true,
-        styleSelectedText: true,
-        mode: self.handler.server_type === 'gpdb' ? 'text/x-gpsql' : 'text/x-pgsql',
-        foldOptions: {
-          widget: '\u2026',
-        },
-        foldGutter: {
-          rangeFinder: CodeMirror.fold.combine(
-            CodeMirror.pgadminBeginRangeFinder,
-            CodeMirror.pgadminIfRangeFinder,
-            CodeMirror.pgadminLoopRangeFinder,
-            CodeMirror.pgadminCaseRangeFinder
-          ),
-        },
-        gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
-        extraKeys: pgBrowser.editor_shortcut_keys,
-        scrollbarStyle: 'simple',
-      });
-
-      // Refresh Code mirror on SQL panel resize to
-      // display its value properly
-      self.sql_panel_obj.on(wcDocker.EVENT.RESIZE_ENDED, function() {
-        setTimeout(function() {
-          if (self && self.query_tool_obj) {
-            self.query_tool_obj.refresh();
-          }
-        }, 200);
-      });
-
-      // Create panels for 'Data Output', 'Explain', 'Messages', 'History' and 'Geometry Viewer'
       var data_output = new pgAdmin.Browser.Panel({
         name: 'data_output',
         title: gettext('Data Output'),
@@ -303,24 +277,66 @@ define('tools.querytool', [
       });
 
       // Load all the created panels
-      data_output.load(main_docker);
-      explain.load(main_docker);
-      messages.load(main_docker);
-      history.load(main_docker);
-      scratch.load(main_docker);
-      notifications.load(main_docker);
-      geometry_viewer.load(main_docker);
+      sql_panel.load(self.docker);
+      data_output.load(self.docker);
+      explain.load(self.docker);
+      messages.load(self.docker);
+      history.load(self.docker);
+      scratch.load(self.docker);
+      notifications.load(self.docker);
+      geometry_viewer.load(self.docker);
 
-      // Add all the panels to the docker
-      self.scratch_panel = main_docker.addPanel('scratch', wcDocker.DOCK.RIGHT, self.sql_panel_obj);
-      self.history_panel = main_docker.addPanel('history', wcDocker.DOCK.STACKED, self.sql_panel_obj);
-      self.data_output_panel = main_docker.addPanel('data_output', wcDocker.DOCK.BOTTOM);
-      self.explain_panel = main_docker.addPanel('explain', wcDocker.DOCK.STACKED, self.data_output_panel);
-      self.messages_panel = main_docker.addPanel('messages', wcDocker.DOCK.STACKED, self.data_output_panel);
-      self.notifications_panel = main_docker.addPanel('notifications', wcDocker.DOCK.STACKED, self.data_output_panel);
+      // restore the layout if present else fallback to buildDefaultLayout
+      pgBrowser.restore_layout(self.docker, this.layout, this.buildDefaultLayout.bind(this));
+
+      self.docker.on(wcDocker.EVENT.LAYOUT_CHANGED, function() {
+        pgBrowser.save_current_layout('SQLEditor/Layout', self.docker);
+      });
+
+      self.sql_panel_obj = self.docker.findPanels('sql_panel')[0];
+      self.history_panel = self.docker.findPanels('history')[0];
+      self.data_output_panel = self.docker.findPanels('data_output')[0];
+      self.explain_panel = self.docker.findPanels('explain')[0];
+      self.messages_panel = self.docker.findPanels('messages')[0];
+      self.notifications_panel = self.docker.findPanels('notifications')[0];
+
+      // Refresh Code mirror on SQL panel resize to
+      // display its value properly
+      self.sql_panel_obj.on(wcDocker.EVENT.RESIZE_ENDED, function() {
+        setTimeout(function() {
+          if (self && self.query_tool_obj) {
+            self.query_tool_obj.refresh();
+          }
+        }, 200);
+      });
 
       self.render_history_grid();
       queryToolNotifications.renderNotificationsGrid(self.notifications_panel);
+
+      var text_container = $('<textarea id="sql_query_tool" tabindex: "-1"></textarea>');
+      var output_container = $('<div id="output-panel" tabindex: "0"></div>').append(text_container);
+      self.sql_panel_obj.$container.find('.pg-panel-content').append(output_container);
+
+      self.query_tool_obj = CodeMirror.fromTextArea(text_container.get(0), {
+        tabindex: '0',
+        lineNumbers: true,
+        styleSelectedText: true,
+        mode: self.handler.server_type === 'gpdb' ? 'text/x-gpsql' : 'text/x-pgsql',
+        foldOptions: {
+          widget: '\u2026',
+        },
+        foldGutter: {
+          rangeFinder: CodeMirror.fold.combine(
+            CodeMirror.pgadminBeginRangeFinder,
+            CodeMirror.pgadminIfRangeFinder,
+            CodeMirror.pgadminLoopRangeFinder,
+            CodeMirror.pgadminCaseRangeFinder
+          ),
+        },
+        gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+        extraKeys: pgBrowser.editor_shortcut_keys,
+        scrollbarStyle: 'simple',
+      });
 
       if (!self.preferences.new_browser_tab) {
         // Listen on the panel closed event and notify user to save modifications.
@@ -2066,7 +2082,7 @@ define('tools.querytool', [
        * header and loading icon and start execution of the sql query.
        */
       start: function(transId, is_query_tool, editor_title, script_type_url,
-        server_type, url_params
+        server_type, url_params, layout
       ) {
         var self = this;
 
@@ -2079,6 +2095,7 @@ define('tools.querytool', [
         self.server_type = server_type;
         self.url_params = url_params;
         self.script_type_url = script_type_url;
+        self.is_transaction_buttons_disabled = true;
 
         // We do not allow to call the start multiple times.
         if (self.gridView)
@@ -2087,6 +2104,7 @@ define('tools.querytool', [
         self.gridView = new SQLEditorView({
           el: self.container,
           handler: self,
+          layout: layout,
         });
         self.transId = self.gridView.transId = transId;
 
@@ -2402,38 +2420,34 @@ define('tools.querytool', [
             var explain_data_array = [],
               explain_data_json = null;
 
-<<<<<<< HEAD
-            if(data.types[0].typname === 'json') {
-=======
             if(data.types[0] && data.types[0].typname === 'json') {
->>>>>>> 4dcd3e31d86c6f61f47fafc047848120f70b7fc0
               /* json is sent as text, parse it */
               explain_data_json = JSON.parse(data.result[0]);
+            }
 
-              if (explain_data_json && explain_data_json[0] &&
-                explain_data_json[0].hasOwnProperty('Plan') &&
-                _.isObject(explain_data_json[0]['Plan'])
-              ) {
-                var explain_data = [JSON.stringify(explain_data_json, null, 2)];
-                explain_data_array.push(explain_data);
-                // Make sure - the 'Data Output' panel is visible, before - we
-                // start rendering the grid.
-                self.gridView.data_output_panel.focus();
-                setTimeout(
-                  function() {
-                    self.gridView.render_grid(
-                      explain_data_array, self.columns, self.can_edit,
-                      self.client_primary_key
-                    );
-                    // Make sure - the 'Explain' panel is visible, before - we
-                    // start rendering the grid.
-                    self.gridView.explain_panel.focus();
-                    pgExplain.DrawJSONPlan(
-                      $('.sql-editor-explain'), explain_data_json
-                    );
-                  }, 10
-                );
-              }
+            if (explain_data_json && explain_data_json[0] &&
+              explain_data_json[0].hasOwnProperty('Plan') &&
+              _.isObject(explain_data_json[0]['Plan'])
+            ) {
+              var explain_data = [JSON.stringify(explain_data_json, null, 2)];
+              explain_data_array.push(explain_data);
+              // Make sure - the 'Data Output' panel is visible, before - we
+              // start rendering the grid.
+              self.gridView.data_output_panel.focus();
+              setTimeout(
+                function() {
+                  self.gridView.render_grid(
+                    explain_data_array, self.columns, self.can_edit,
+                    self.client_primary_key
+                  );
+                  // Make sure - the 'Explain' panel is visible, before - we
+                  // start rendering the grid.
+                  self.gridView.explain_panel.focus();
+                  pgExplain.DrawJSONPlan(
+                    $('.sql-editor-explain'), explain_data_json
+                  );
+                }, 10
+              );
             } else {
               // Make sure - the 'Data Output' panel is visible, before - we
               // start rendering the grid.
@@ -2591,6 +2605,19 @@ define('tools.querytool', [
         history.total_time = '-';
       },
 
+      set_sql_message(msg, append=false) {
+        if(append) {
+          $('.sql-editor-message').append(msg);
+        } else {
+          $('.sql-editor-message').text(msg);
+        }
+
+        // Scroll automatically when msgs appends to element
+        setTimeout(function() {
+          $('.sql-editor-message').scrollTop($('.sql-editor-message')[0].scrollHeight);
+        }, 10);
+      },
+
       // This function is used to raise appropriate message.
       update_msg_history: function(status, msg, clear_grid) {
         var self = this;
@@ -2609,16 +2636,10 @@ define('tools.querytool', [
           self.columns = undefined;
           self.collection = undefined;
 
-          $('.sql-editor-message').text(msg);
+          self.set_sql_message(msg);
         } else {
-          $('.sql-editor-message').append(_.escape(msg));
+          self.set_sql_message(_.escape(msg), true);
         }
-
-        // Scroll automatically when msgs appends to element
-        setTimeout(function() {
-          $('.sql-editor-message').scrollTop($('.sql-editor-message')[0].scrollHeight);
-
-        }, 10);
 
         if (status != 'Busy') {
           $('#btn-flash').prop('disabled', false);
@@ -2896,14 +2917,14 @@ define('tools.querytool', [
                 self.primary_keys_data = {};
 
                 // Clear msgs after successful save
-                $('.sql-editor-message').html('');
+                self.set_sql_message('');
 
                 alertify.success(gettext('Data saved successfully.'));
               } else {
               // Something went wrong while saving data on the db server
                 $('#btn-flash').prop('disabled', false);
                 $('#btn-download').prop('disabled', false);
-                $('.sql-editor-message').text(res.data.result);
+                self.set_sql_message(res.data.result);
                 var err_msg = S(gettext('%s.')).sprintf(res.data.result).value();
                 alertify.error(err_msg, 20);
                 grid.setSelectedRows([]);
@@ -3503,22 +3524,33 @@ define('tools.querytool', [
 
       // This function is used to enable/disable buttons
       disable_tool_buttons: function(disabled) {
-        $('#btn-clear-dropdown').prop('disabled', disabled);
-        $('#btn-explain').prop('disabled', disabled);
-        $('#btn-explain-analyze').prop('disabled', disabled);
-        $('#btn-explain-options-dropdown').prop('disabled', disabled);
-        $('#btn-edit-dropdown').prop('disabled', disabled);
-        $('#btn-load-file').prop('disabled', disabled);
-        $('#btn-save').prop('disabled', disabled);
-        $('#btn-file-menu-dropdown').prop('disabled', disabled);
-        $('#btn-find').prop('disabled', disabled);
-        $('#btn-find-menu-dropdown').prop('disabled', disabled);
+        let mode_disabled = disabled;
+
+        /* Buttons be always disabled in view/edit mode */
+        if(!this.is_query_tool) {
+          mode_disabled = true;
+        }
+
+        $('#btn-clear-dropdown').prop('disabled', mode_disabled);
+        $('#btn-explain').prop('disabled', mode_disabled);
+        $('#btn-explain-analyze').prop('disabled', mode_disabled);
+        $('#btn-explain-options-dropdown').prop('disabled', mode_disabled);
+        $('#btn-edit-dropdown').prop('disabled', mode_disabled);
+        $('#btn-load-file').prop('disabled', mode_disabled);
+        $('#btn-save').prop('disabled', mode_disabled);
+        $('#btn-file-menu-dropdown').prop('disabled', mode_disabled);
+        $('#btn-find').prop('disabled', mode_disabled);
+        $('#btn-find-menu-dropdown').prop('disabled', mode_disabled);
         if (this.is_query_tool) {
           // Cancel query tool needs opposite behaviour
           $('#btn-cancel-query').prop('disabled', !disabled);
-          $('#btn-query-dropdown').prop('disabled', !this.is_transaction_buttons_disabled);
+          if(this.is_transaction_buttons_disabled) {
+            $('#btn-query-dropdown').prop('disabled', disabled);
+          } else {
+            $('#btn-query-dropdown').prop('disabled', true);
+          }
         } else {
-          $('#btn-query-dropdown').prop('disabled', disabled);
+          $('#btn-query-dropdown').prop('disabled', mode_disabled);
         }
       },
 
@@ -3664,56 +3696,41 @@ define('tools.querytool', [
           }),
           data = { query: query, filename: filename };
 
+        // Disable the Execute button
+        $('#btn-flash').prop('disabled', true);
+        $('#btn-download').prop('disabled', true);
+        self.disable_tool_buttons(true);
+        self.set_sql_message('');
+        self.trigger(
+          'pgadmin-sqleditor:loading-icon:show',
+          gettext('Downloading CSV...')
+        );
+
         // Get the CSV file
         self.download_csv_obj = $.ajax({
           type: 'POST',
           url: url,
           data: data,
           cache: false,
-          async: true,
-          xhrFields: {
-            responseType: 'blob',
-          },
-          beforeSend: function() {
-            // Disable the Execute button
-            $('#btn-flash').prop('disabled', true);
-            $('#btn-download').prop('disabled', true);
-            self.disable_tool_buttons(true);
-
-            self.trigger(
-              'pgadmin-sqleditor:loading-icon:show',
-              gettext('Downloading CSV...')
-            );
-          },
-        })
-<<<<<<< HEAD
-        .done(function(response) {
-          let urlCreator = window.URL || window.webkitURL,
-            url = urlCreator.createObjectURL(response),
-            link = document.createElement('a'),
-            current_browser = pgAdmin.Browser.get_browser();
-
-          if (current_browser.name === 'IE' && window.navigator.msSaveBlob) {
-            // IE10+ : (has Blob, but not a[download] or URL)
-            window.navigator.msSaveBlob(response, filename);
+        }).done(function(response) {
+          // if response.data present, extract the message
+          if(!_.isUndefined(response.data)) {
+            if(!response.status) {
+              self._highlight_error(response.data.result);
+              self.set_sql_message(response.data.result);
+            }
           } else {
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            link.click();
-          }
-=======
-          .done(function(response) {
-            let urlCreator = window.URL || window.webkitURL,
-              url = urlCreator.createObjectURL(response),
+            let respBlob = new Blob([response], {type : 'text/csv'}),
+              urlCreator = window.URL || window.webkitURL,
+              url = urlCreator.createObjectURL(respBlob),
               current_browser = pgAdmin.Browser.get_browser(),
               link = document.createElement('a');
 
             document.body.appendChild(link);
->>>>>>> 4dcd3e31d86c6f61f47fafc047848120f70b7fc0
 
             if (current_browser.name === 'IE' && window.navigator.msSaveBlob) {
             // IE10+ : (has Blob, but not a[download] or URL)
-              window.navigator.msSaveBlob(response, filename);
+              window.navigator.msSaveBlob(respBlob, filename);
             } else {
               link.setAttribute('href', url);
               link.setAttribute('download', filename);
@@ -3722,27 +3739,32 @@ define('tools.querytool', [
 
             document.body.removeChild(link);
             self.download_csv_obj = undefined;
-            // Enable the execute button
-            $('#btn-flash').prop('disabled', false);
-            $('#btn-download').prop('disabled', false);
-            self.disable_tool_buttons(false);
-            self.trigger(
-              'pgadmin-sqleditor:loading-icon:hide');
+          }
 
-          })
-          .fail(function(err) {
-            let msg = '';
+          // Enable the execute button
+          $('#btn-flash').prop('disabled', false);
+          $('#btn-download').prop('disabled', false);
+          self.disable_tool_buttons(false);
+          self.trigger('pgadmin-sqleditor:loading-icon:hide');
+        }).fail(function(err) {
+          let msg = '';
 
-            if (err.statusText == 'abort') {
-              msg = gettext('CSV Download cancelled.');
-            } else {
-              msg = httpErrorHandler.handleQueryToolAjaxError(
-                pgAdmin, self, err, gettext('Download CSV'), [], true
-              );
-            }
-            alertify.alert(gettext('Download CSV error'), msg);
-          });
+          // Enable the execute button
+          $('#btn-flash').prop('disabled', false);
+          $('#btn-download').prop('disabled', false);
+          self.disable_tool_buttons(false);
+          self.trigger('pgadmin-sqleditor:loading-icon:hide');
 
+
+          if (err.statusText == 'abort') {
+            msg = gettext('CSV Download cancelled.');
+          } else {
+            msg = httpErrorHandler.handleQueryToolAjaxError(
+              pgAdmin, self, err, gettext('Download CSV'), [], true
+            );
+          }
+          alertify.alert(gettext('Download CSV error'), msg);
+        });
       },
 
       call_cache_preferences: function() {

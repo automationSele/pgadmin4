@@ -228,6 +228,15 @@ class SequenceView(PGChildNodeView):
             )
 
         for row in rset['rows']:
+            if not self.blueprint.show_system_objects:
+                system_seq = self._get_dependency(row['oid'],
+                                                  show_system_objects=True)
+                seq = filter(lambda dep: dep['type'] == 'column', system_seq)
+                if type(seq) is not list:
+                    seq = list(seq)
+                if len(seq) > 0:
+                    continue
+
             res.append(
                 self.blueprint.generate_browser_node(
                     row['oid'],
@@ -349,17 +358,22 @@ class SequenceView(PGChildNodeView):
                         "Could not find the required parameter (%s)." % arg
                     )
                 )
-        # The SQL below will execute CREATE DDL only
-        SQL = render_template(
-            "/".join([self.template_path, 'create.sql']),
-            data=data, conn=self.conn
-        )
+
+        try:
+            # The SQL below will execute CREATE DDL only
+            SQL = render_template(
+                "/".join([self.template_path, 'create.sql']),
+                data=data, conn=self.conn
+            )
+        except Exception as e:
+            return internal_server_error(errormsg=e)
+
         status, msg = self.conn.execute_scalar(SQL)
         if not status:
             return internal_server_error(errormsg=msg)
 
         if 'relacl' in data:
-            data['relacl'] = parse_priv_to_db(data['relacl'], 'DATABASE')
+            data['relacl'] = parse_priv_to_db(data['relacl'], self.acl)
 
         # The SQL below will execute rest DMLs because we cannot execute
         # CREATE with any other
@@ -755,7 +769,15 @@ class SequenceView(PGChildNodeView):
             scid: Schema ID
             seid: Sequence ID
         """
-        dependencies_result = self.get_dependencies(self.conn, seid)
+
+        return ajax_response(
+            response=self._get_dependency(seid),
+            status=200
+        )
+
+    def _get_dependency(self, seid, show_system_objects=None):
+        dependencies_result = self.get_dependencies(self.conn, seid, None,
+                                                    show_system_objects)
 
         # Get missing dependencies.
         # A Corner case, reported by Guillaume Lelarge, could be found at:
@@ -785,11 +807,7 @@ class SequenceView(PGChildNodeView):
             dependencies_result.append({'type': 'column',
                                         'name': ref_name,
                                         'field': dep_type})
-
-        return ajax_response(
-            response=dependencies_result,
-            status=200
-        )
+        return dependencies_result
 
     @check_precondition(action="stats")
     def statistics(self, gid, sid, did, scid, seid=None):

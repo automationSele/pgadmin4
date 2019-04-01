@@ -181,23 +181,21 @@ class PgadminPage:
                 ".//parent::*[@class='aciTreeItem']")
             ActionChains(self.driver).double_click(item).perform()
 
-    def toggle_open_trees_node(self):
+    def toggle_open_tables_node(self):
         """The function will be used for opening Trees node only"""
 
         # get the element which contains 'aria-expanded' info
-        tables_expansion_ele =self.find_by_xpath("//div[div[div[div[div[div"
-                                                 "[div[div[span[span["
-                                                 "(@class='aciTreeText') and "
-                                                 "text()='Tables']]]]]]]]]]")
+        tables_expansion_ele = self.find_by_xpath("//div[div[div[div[div[div"
+                                                  "[div[div[span[span["
+                                                  "(@class='aciTreeText') and "
+                                                  "text()='Tables']]]]]]]]]]")
 
-        if tables_expansion_ele.get_attribute('aria-expanded') =='false':
+        if tables_expansion_ele.get_attribute('aria-expanded') == 'false':
             # button element of the Tables node to open it
             item_button = self.find_by_xpath(
                 "//div[span[span[(@class='aciTreeText') and text()"
                 "='Tables']]]/span[@class='aciTreeButton']")
             ActionChains(self.driver).click(item_button).perform()
-        else:
-            print("The tree node is already opened")
 
     def toggle_open_server(self, tree_item_text):
         def check_for_password_dialog_or_tree_open(driver):
@@ -396,9 +394,9 @@ class PgadminPage:
         element_found = False
         try:
             WebDriverWait(self.driver, timeout, .01).until(
-            EC.visibility_of_element_located((By.XPATH, xpath)))
+                EC.visibility_of_element_located((By.XPATH, xpath)))
             element_found = True
-        except:
+        except Exception as e:
             pass
         return element_found
 

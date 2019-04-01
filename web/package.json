@@ -90,7 +90,7 @@
     "underscore": "^1.9.1",
     "underscore.string": "^3.3.5",
     "watchify": "~3.11.1",
-    "webcabin-docker": "git+https://github.com/EnterpriseDB/wcDocker/#9cf81f03bb350b76b77a264f1db5d55391d5e424",
+    "webcabin-docker": "git+https://github.com/EnterpriseDB/wcDocker/#e191a1063c111d5542ff26a7c163940be180333d",
     "wkx": "^0.4.6"
   },
   "scripts": {
@@ -104,6 +104,6 @@
     "test:karma": "yarn run linter && yarn run karma start",
     "test:feature": "yarn run bundle && python regression/runtests.py --pkg feature_tests",
     "test": "yarn run test:karma-once && yarn run bundle && python regression/runtests.py",
-    "pep8": "pycodestyle --config=.pycodestyle ."
+    "pep8": "pycodestyle --config=../.pycodestyle ../docs && pycodestyle --config=../.pycodestyle ../pkg && pycodestyle --config=../.pycodestyle ../tools && pycodestyle --config=../.pycodestyle ../web"
   }
 }

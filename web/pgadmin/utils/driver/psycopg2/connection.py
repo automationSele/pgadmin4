@@ -705,6 +705,12 @@ WHERE
             )
             return False, errmsg
 
+        # http://initd.org/psycopg/docs/cursor.html#cursor.description
+        # to avoid no-op
+        if cur.description is None:
+            return False, \
+                gettext('The query executed did not return any data.')
+
         def handle_json_data(json_columns, results):
             """
             [ This is only for Python2.x]
@@ -935,10 +941,6 @@ WHERE
             formatted_exception_msg: if True then function return the
             formatted exception message
         """
-
-        encoding = self.python_encoding
-
-        query = query.encode(encoding)
 
         # Convert the params based on python_encoding
         params = self.escape_params_sqlascii(params)

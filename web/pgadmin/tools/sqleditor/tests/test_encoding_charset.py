@@ -18,7 +18,6 @@ from pgadmin.utils import server_utils, IS_PY2
 import random
 
 
-
 class TestEncodingCharset(BaseTestGenerator):
     """
     This class validates character support in pgAdmin4 for

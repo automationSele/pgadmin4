@@ -363,7 +363,8 @@ class ViewNode(PGChildNodeView, VacuumSettings):
             rset['rows'][0]['oid'],
             scid,
             rset['rows'][0]['name'],
-            icon="icon-view"
+            icon="icon-view" if self.node_type == 'view'
+            else "icon-mview"
         )
 
         return make_json_response(
@@ -389,7 +390,8 @@ class ViewNode(PGChildNodeView, VacuumSettings):
                     row['oid'],
                     scid,
                     row['name'],
-                    icon="icon-view"
+                    icon="icon-view" if self.node_type == 'view'
+                    else "icon-mview"
                 ))
 
         return make_json_response(
@@ -504,7 +506,8 @@ class ViewNode(PGChildNodeView, VacuumSettings):
                     view_id,
                     scid,
                     data['name'],
-                    icon="icon-view"
+                    icon="icon-view" if self.node_type == 'view'
+                    else "icon-mview"
                 )
             )
         except Exception as e:
@@ -520,9 +523,9 @@ class ViewNode(PGChildNodeView, VacuumSettings):
             request.data, encoding='utf-8'
         )
         try:
-            SQL, nameOrError = self.getSQL(gid, sid, did, data, vid)
+            SQL, name = self.getSQL(gid, sid, did, data, vid)
             if SQL is None:
-                return nameOrError
+                return name
             SQL = SQL.strip('\n').strip(' ')
             status, res = self.conn.execute_void(SQL)
             if not status:
@@ -549,7 +552,8 @@ class ViewNode(PGChildNodeView, VacuumSettings):
                     view_id,
                     scid,
                     new_view_name,
-                    icon="icon-view"
+                    icon="icon-view" if self.node_type == 'view'
+                    else "icon-mview"
                 )
             )
         except Exception as e:

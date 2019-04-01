@@ -463,7 +463,6 @@ define('pgadmin.datagrid', [
           }
         }
 
-
         // Open the panel if frame is initialized
         let titileForURLObj = sqlEditorUtils.removeSlashInTheString(grid_title);
         var url_params = {

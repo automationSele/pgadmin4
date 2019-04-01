@@ -66,7 +66,6 @@ def getEncoding(key):
     [Postgres_encoding, Python_encoding, typecast_encoding] -
     Postgres encoding, Python encoding, type cast encoding
     """
-
     #
     # Reference: https://www.postgresql.org/docs/11/multibyte.html
 

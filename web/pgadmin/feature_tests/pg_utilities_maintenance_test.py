@@ -15,7 +15,7 @@ from regression.python_test_utils import test_utils
 from regression.python_test_utils import test_gui_helper
 
 
-class PGUtilitiesMaintenanceFeatureTest():
+class PGUtilitiesMaintenanceFeatureTest(BaseFeatureTest):
     """ This class test PG utilities test scenarios """
 
     scenarios = [
@@ -83,9 +83,6 @@ class PGUtilitiesMaintenanceFeatureTest():
         time.sleep(0.5)
 
     def _verify_command(self):
-        # status = self.page.find_by_css_selector(
-        #     ".pg-bg-status .bg-success-light .pg-bg-status-text").text
-
         status = self.page.find_by_css_selector(
             ".pg-bg-status-text").text
         self.assertEquals(status, "Successfully completed.")

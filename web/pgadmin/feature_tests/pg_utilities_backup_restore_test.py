@@ -16,7 +16,7 @@ from regression.python_test_utils import test_utils
 from regression.python_test_utils import test_gui_helper
 
 
-class PGUtilitiesBackupFeatureTest():
+class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
     """ This class test PG utilities - Backup and Restore test scenarios """
 
     scenarios = [
@@ -83,9 +83,6 @@ class PGUtilitiesBackupFeatureTest():
         status = self.page.find_by_css_selector(
             ".pg-bg-status-text").text
 
-        print("Debug: .pg-bg-status-text %s"%status)
-
-        #.pg-bg-status-text
         self.assertEquals(status, "Successfully completed.")
 
         self.page.find_by_css_selector(
