@@ -30,7 +30,7 @@ Features
 ********
 
 | `Feature #2001 <https://redmine.postgresql.org/issues/2001>`_ - Add support for reverse proxied setups with Gunicorn, and document Gunicorn, uWSGI & NGINX configurations.
-| `Feature #4017 <https://redmine.postgresql.org/issues/4018>`_ - Make the Query Tool history persistent across sessions.
+| `Feature #4017 <https://redmine.postgresql.org/issues/4017>`_ - Make the Query Tool history persistent across sessions.
 | `Feature #4018 <https://redmine.postgresql.org/issues/4018>`_ - Remove the large and unnecessary dependency on React and 87 other related libraries.
 | `Feature #4030 <https://redmine.postgresql.org/issues/4030>`_ - Add support for IDENTITY columns.
 | `Feature #4075 <https://redmine.postgresql.org/issues/4075>`_ - Add an ePub doc build target.
@@ -67,3 +67,4 @@ Bug fixes
 | `Bug #4100 <https://redmine.postgresql.org/issues/4100>`_ - Ensure sequences can be created with increment, start, minimum and maximum options set.
 | `Bug #4105 <https://redmine.postgresql.org/issues/4105>`_ - Fix an issue where JSON data would not be rendered in the Query Tool.
 | `Bug #4109 <https://redmine.postgresql.org/issues/4109>`_ - Ensure View/Materialized View node should be visible after updating any property.
+| `Bug #4110 <https://redmine.postgresql.org/issues/4110>`_ - Fix custom autovacuum configuration for Materialized Views.
