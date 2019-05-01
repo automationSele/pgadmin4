@@ -284,7 +284,17 @@ class PgadminPage:
 
     def fill_input(self, field, field_content, input_keys=False,
                    key_after_input=Keys.ARROW_DOWN):
-        field.click()
+        try:
+            attempt = 0
+            for attempt in range(0, 3):
+                field.click()
+                print("debug: fill_input break")
+                break;
+        except Exception as e:
+            print("debug: fill_input"+str(attempt))
+            time.sleep(.2)
+            if attempt  == 2:
+                raise Exception(e)
 
         # Use send keys if input_keys true, else use javascript to set content
         if input_keys:
