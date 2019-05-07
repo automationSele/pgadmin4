@@ -53,7 +53,7 @@ class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
         self.page.toggle_open_tree_item('postgres')
         self.page.toggle_open_tree_item('Schemas')
         self.page.toggle_open_tree_item('public')
-        self.page.toggle_open_tree_item('Functions')
+        self.page.toggle_open_function_node()
         self.page.select_tree_item("a_test_function()")
 
     def _debug_function(self):

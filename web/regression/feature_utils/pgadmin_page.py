@@ -197,13 +197,48 @@ class PgadminPage:
                 "='Tables']]]/span[@class='aciTreeButton']")
             ActionChains(self.driver).click(item_button).perform()
 
+    def toggle_open_function_node(self):
+        """The function will be used for opening Functions node only"""
+        node_expanded = False
+        attempts = 3
+
+        while node_expanded != True and attempts > 0:
+            # get the element which contains 'aria-expanded' info
+
+            xpath_for_exp = "//div[div[div[div[div[div[div[div[span[span[" \
+                    "(@class='aciTreeText') and starts-with(text()," \
+                    "'Functions')]]]]]]]]]]"
+            xpath_for_button = "//div[span[span[(@class='aciTreeText') " \
+                               "and starts-with(text(),'Functions')]]]" \
+                               "/span[@class='aciTreeButton']"
+
+            function_expansion_ele = self.find_by_xpath(xpath_for_exp)
+
+            # look into the attribute and check if it is already expanded or
+            #  not
+            if function_expansion_ele.get_attribute('aria-expanded') \
+                    == 'false':
+                # button element of the Function node to open it
+                item_button = self.find_by_xpath(xpath_for_button)
+                ActionChains(self.driver).click(item_button).perform()
+                # Expansion of element on GUI takes sometime, so put small
+                # sleep
+                time.sleep(.5)
+                function_expansion_ele = self.find_by_xpath(
+                    xpath_for_exp)
+                if function_expansion_ele == 'true':
+                    break
+                else:
+                    attempts -= 1
+            else:
+                node_expanded = True
+
     def toggle_open_server(self, tree_item_text):
         def check_for_password_dialog_or_tree_open(driver):
             try:
                 dialog = driver.find_element_by_id("frmPassword")
             except WebDriverException:
                 dialog = None
-
             try:
                 database_node = driver.find_element_by_xpath(
                     "//*[@id='tree']//*[.='Databases']"
