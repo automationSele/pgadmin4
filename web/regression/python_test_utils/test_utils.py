@@ -319,6 +319,26 @@ def drop_debug_function(server, db_name, function_name="test_func"):
         traceback.print_exc(file=sys.stderr)
 
 
+def does_function_exist(server, db_name, fun_name):
+        query = "select exists(select * " \
+                "from pg_proc where proname = '%s');"%fun_name
+
+        connection = get_db_connection(
+            db_name,
+            server['username'],
+            server['db_password'],
+            server['host'],
+            server['port'],
+            server['sslmode']
+        )
+
+        cursor = connection.cursor()
+
+        cursor.execute(query)
+        result = cursor.fetchall()
+        return str(result[0][0])
+
+
 def create_role(server, db_name, role_name="test_role"):
     try:
         connection = get_db_connection(
