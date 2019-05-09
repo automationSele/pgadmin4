@@ -203,16 +203,15 @@ class PgadminPage:
         node_expanded = False
         attempts = 3
 
+        xpath_for_functions_node = \
+            "//span[@class='aciTreeText' and starts-with(text()," \
+            "'Functions')]"
         xpath_for_exp = "//div[div[div[div[div[div[div[div[span[span[" \
                         "(@class='aciTreeText') and starts-with(text()," \
                         "'Functions')]]]]]]]]]]"
         xpath_for_button = "//div[span[span[(@class='aciTreeText') " \
                            "and starts-with(text(),'Functions')]]]" \
                            "/span[@class='aciTreeButton']"
-
-        xpath_for_functions_node = \
-            "//span[@class='aciTreeText' and starts-with(text()," \
-            "'Functions')]"
 
         while node_expanded is not True and attempts > 0:
             # get the element which contains 'aria-expanded' info

@@ -61,6 +61,7 @@ class PGUtilitiesMaintenanceFeatureTest(BaseFeatureTest):
                                 self.table_name)
         self.page.add_server(self.server)
         self.wait = WebDriverWait(self.page.driver, 20)
+        test_gui_helper.close_bgprocess_popup(self)
 
     def runTest(self):
         self._open_maintenance_dialogue()
@@ -85,6 +86,9 @@ class PGUtilitiesMaintenanceFeatureTest(BaseFeatureTest):
     def _verify_command(self):
         status = self.page.find_by_css_selector(
             ".pg-bg-status-text").text
+        if status is not "Successfully completed.":
+            test_gui_helper.close_bgprocess_popup(self)
+
         self.assertEquals(status, "Successfully completed.")
         self.page.find_by_css_selector(".pg-bg-more-details").click()
         command = self.page.find_by_css_selector(
@@ -113,7 +117,6 @@ class PGUtilitiesMaintenanceFeatureTest(BaseFeatureTest):
             "div.wcFloatingFocus div.fa-close").click()
 
     def after(self):
-        test_gui_helper.close_bgprocess_popup(self)
         self.page.remove_server(self.server)
         connection = test_utils.get_db_connection(
             self.server['db'],

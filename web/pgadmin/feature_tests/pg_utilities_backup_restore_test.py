@@ -53,6 +53,8 @@ class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
 
         self.wait = WebDriverWait(self.page.driver, 20)
 
+        test_gui_helper.close_bgprocess_popup(self)
+
     def runTest(self):
         self.page.toggle_open_server(self.server['name'])
         self.page.toggle_open_tree_item('Databases')
@@ -77,11 +79,10 @@ class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
 
         self.page.find_by_css_selector('.ajs-bg-bgprocess')
 
-        # status = self.page.find_by_css_selector(
-        #     ".pg-bg-status .bg-success-light .pg-bg-status-text").text
-
         status = self.page.find_by_css_selector(
             ".pg-bg-status-text").text
+        if status is not "Successfully completed.":
+            test_gui_helper.close_bgprocess_popup(self)
 
         self.assertEquals(status, "Successfully completed.")
 
@@ -132,6 +133,9 @@ class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
 
         status = self.page.find_by_css_selector(
             ".pg-bg-status-text").text
+        if status is not "Successfully completed.":
+            test_gui_helper.close_bgprocess_popup(self)
+
         self.assertEquals(status, "Successfully completed.")
 
         self.page.find_by_css_selector(
@@ -158,7 +162,6 @@ class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
                 os.remove(backup_file)
 
     def after(self):
-        test_gui_helper.close_bgprocess_popup(self)
         self.page.remove_server(self.server)
         connection = test_utils.get_db_connection(
             self.server['db'],
