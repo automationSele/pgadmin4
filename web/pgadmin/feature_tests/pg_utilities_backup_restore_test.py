@@ -81,8 +81,11 @@ class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
 
         status = self.page.find_by_css_selector(
             ".pg-bg-status-text").text
-        if status is not "Successfully completed.":
+        print("status is123 :" + str(status))
+
+        if status != "Successfully completed.":
             test_gui_helper.close_bgprocess_popup(self)
+            print("Executed, which should not be executed")
 
         self.assertEquals(status, "Successfully completed.")
 
@@ -133,8 +136,10 @@ class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
 
         status = self.page.find_by_css_selector(
             ".pg-bg-status-text").text
-        if status is not "Successfully completed.":
+        print("status is :"+str(status))
+        if status != "Successfully completed.":
             test_gui_helper.close_bgprocess_popup(self)
+            print("Executed, which should not be executed")
 
         self.assertEquals(status, "Successfully completed.")
 
