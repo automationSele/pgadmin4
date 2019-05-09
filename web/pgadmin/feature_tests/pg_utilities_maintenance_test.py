@@ -86,7 +86,7 @@ class PGUtilitiesMaintenanceFeatureTest(BaseFeatureTest):
     def _verify_command(self):
         status = self.page.find_by_css_selector(
             ".pg-bg-status-text").text
-        if status is not "Successfully completed.":
+        if status != "Successfully completed.":
             test_gui_helper.close_bgprocess_popup(self)
 
         self.assertEquals(status, "Successfully completed.")
