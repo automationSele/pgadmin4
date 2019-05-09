@@ -342,14 +342,11 @@ class PgadminPage:
             attempt = 0
             for attempt in range(0, 3):
                 field.click()
-                print("debug: fill_input break")
                 break;
         except Exception as e:
-            print("debug: fill_input"+str(attempt))
             time.sleep(.2)
             if attempt  == 2:
                 raise Exception(e)
-
         # Use send keys if input_keys true, else use javascript to set content
         if input_keys:
             backspaces = [Keys.BACKSPACE] * len(field.get_attribute('value'))
