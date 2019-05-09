@@ -9,6 +9,7 @@
 
 import time
 
+from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, \
     WebDriverException, TimeoutException, NoSuchWindowException, \
     StaleElementReferenceException
@@ -202,16 +203,34 @@ class PgadminPage:
         node_expanded = False
         attempts = 3
 
-        while node_expanded != True and attempts > 0:
+        xpath_for_exp = "//div[div[div[div[div[div[div[div[span[span[" \
+                        "(@class='aciTreeText') and starts-with(text()," \
+                        "'Functions')]]]]]]]]]]"
+        xpath_for_button = "//div[span[span[(@class='aciTreeText') " \
+                           "and starts-with(text(),'Functions')]]]" \
+                           "/span[@class='aciTreeButton']"
+
+        xpath_for_functions_node = \
+            "//span[@class='aciTreeText' and starts-with(text()," \
+            "'Functions')]"
+
+        while node_expanded is not True and attempts > 0:
             # get the element which contains 'aria-expanded' info
 
-            xpath_for_exp = "//div[div[div[div[div[div[div[div[span[span[" \
-                    "(@class='aciTreeText') and starts-with(text()," \
-                    "'Functions')]]]]]]]]]]"
-            xpath_for_button = "//div[span[span[(@class='aciTreeText') " \
-                               "and starts-with(text(),'Functions')]]]" \
-                               "/span[@class='aciTreeButton']"
+            xpath_for_refresh_btn = "//li[@class='context-menu-item']" \
+                                    "/span[text()='Refresh...']"
 
+            # add code to refresh button, sometime the the collapsing button
+            #  is not visible even if there is sub node.
+            functions_node_ele = self.find_by_xpath(xpath_for_functions_node)
+
+            webdriver.ActionChains(self.driver).move_to_element(
+                functions_node_ele).context_click().perform()
+            refresh_btn = self.find_by_xpath(xpath_for_refresh_btn)
+            refresh_btn.click()
+            time.sleep(.5)
+
+            # get the expansion status
             function_expansion_ele = self.find_by_xpath(xpath_for_exp)
 
             # look into the attribute and check if it is already expanded or
@@ -226,7 +245,8 @@ class PgadminPage:
                 time.sleep(.5)
                 function_expansion_ele = self.find_by_xpath(
                     xpath_for_exp)
-                if function_expansion_ele == 'true':
+                if function_expansion_ele.get_attribute('aria-expanded') \
+                        == 'true':
                     break
                 else:
                     attempts -= 1
