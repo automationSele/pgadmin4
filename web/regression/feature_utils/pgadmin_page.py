@@ -164,8 +164,6 @@ class PgadminPage:
                 time.sleep(.4)
                 if attempts == 0:
                     raise Exception(e)
-        print("Clicked done on attempt # "+str(attempts))
-
 
     def toggle_open_servers_group(self):
         """This will open Servers group to display underlying nodes"""

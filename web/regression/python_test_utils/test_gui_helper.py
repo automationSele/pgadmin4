@@ -10,7 +10,7 @@
 
 def close_bgprocess_popup(tester):
     """
-    Allow us to close the background process popup window
+    Allows us to close the background process popup window
     """
     screen_shot_taken = False
     # In cases where backup div is not closed (sometime due to some error)
