@@ -76,7 +76,7 @@ class PGUtilitiesMaintenanceFeatureTest(BaseFeatureTest):
         if self.test_level == 'table':
             self.page.toggle_open_tree_item('Schemas')
             self.page.toggle_open_tree_item('public')
-            self.page.toggle_open_tree_item('Tables')
+            self.page.toggle_open_tables_node()
             self.page.select_tree_item(self.table_name)
 
         self.driver.find_element_by_link_text("Tools").click()
