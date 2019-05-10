@@ -152,7 +152,20 @@ class PgadminPage:
             "//*[@id='tree']//*[contains(text(), '" + tree_item_text + "')]"
             "/parent::span[@class='aciTreeItem']")
         self.driver.execute_script("arguments[0].scrollIntoView()", item)
-        item.click()
+        # unexpected exception like element overlapping, click attempts more
+        # than one time
+        attempts = 3
+        while attempts > 0:
+            try:
+                item.click()
+                break
+            except Exception as e:
+                attempts -= 1
+                time.sleep(.4)
+                if attempts == 0:
+                    raise Exception(e)
+        print("Clicked done on attempt # "+str(attempts))
+
 
     def toggle_open_servers_group(self):
         """This will open Servers group to display underlying nodes"""
