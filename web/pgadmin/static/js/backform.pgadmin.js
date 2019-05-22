@@ -444,7 +444,7 @@ define([
     template: _.template([
       '<label class="<%=controlLabelClassName%>"><%=label%></label>',
       '<div class="<%=controlsClassName%> <%=extraClasses.join(\' \')%>">',
-      '      <input tabindex="0" type="checkbox" data-style="quick" data-toggle="toggle"',
+      '      <input tabindex="-1" type="checkbox" data-style="quick" data-toggle="toggle"',
       '      data-size="<%=options.size%>" data-height="<%=options.height%>"  ',
       '      data-on="<%=options.onText%>" data-off="<%=options.offText%>" ',
       '      data-onstyle="<%=options.onColor%>" data-offstyle="<%=options.offColor%>" data-width="<%=options.width%>" ',
@@ -520,6 +520,7 @@ define([
 
       this.$input = this.$el.find('input[type=checkbox]').first();
       this.$input.bootstrapToggle();
+      this.$el.find('.toggle.btn').attr('tabindex', '0');
       this.updateInvalid();
 
       return this;
@@ -1265,7 +1266,12 @@ define([
               newRow = self.grid.body.rows[idx].$el;
 
             newRow.addClass('new');
-            $(newRow).pgMakeBackgridVisible('.backform-tab');
+            try {
+              $(newRow).pgMakeBackgridVisible('.backform-tab');
+            } catch(err) {
+              // We can have subnode controls in Panels
+              $(newRow).pgMakeBackgridVisible('.set-group');
+            }
 
             return false;
           }
@@ -1516,7 +1522,12 @@ define([
           newRow.attr('class', 'new').on('click',() => {
             $(this).attr('class', 'editable');
           });
-          $(newRow).pgMakeBackgridVisible('.backform-tab');
+          try {
+            $(newRow).pgMakeBackgridVisible('.backform-tab');
+          } catch(err) {
+            // We can have subnode controls in Panels
+            $(newRow).pgMakeBackgridVisible('.set-group');
+          }
           return false;
         }
       });
