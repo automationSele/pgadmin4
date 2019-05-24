@@ -40,7 +40,6 @@ class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
                                        'postgres','a_test_function') != 'True':
             raise Exception("The required function is not found")
 
-
     def runTest(self):
         self.page.wait_for_spinner_to_disappear()
         self.page.add_server(self.server)

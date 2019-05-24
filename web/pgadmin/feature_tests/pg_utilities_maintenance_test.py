@@ -84,8 +84,9 @@ class PGUtilitiesMaintenanceFeatureTest(BaseFeatureTest):
         time.sleep(0.5)
 
     def _verify_command(self):
-        status = self.page.find_by_css_selector(
-            ".pg-bg-status-text").text
+
+        status = test_utils.get_watcher_dialogue_status(self)
+
         if status != "Successfully completed.":
             test_gui_helper.close_bgprocess_popup(self)
 

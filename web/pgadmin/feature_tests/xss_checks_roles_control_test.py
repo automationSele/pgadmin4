@@ -84,7 +84,7 @@ class CheckRoleMembershipControlFeatureTest(BaseFeatureTest):
         """This will click and open membership tab of role"""
         success = False
         attempts = 3
-        while not success  and attempts > 0:
+        while not success and attempts > 0:
             membership_tab_link = self.page.find_by_xpath(
                 "//a[normalize-space(text())='Membership']")
             membership_tab_link.click()

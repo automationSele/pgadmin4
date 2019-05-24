@@ -70,7 +70,6 @@ class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
 
         self.wait.until(EC.element_to_be_clickable(
             (By.CSS_SELECTOR, ".file [name='file']"))).click()
-        # .input-group-append >button
         self.page.fill_input_by_field_name(
             "file", "test_backup", loose_focus=True)
 
@@ -79,8 +78,10 @@ class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
 
         self.page.find_by_css_selector('.ajs-bg-bgprocess')
 
-        status = self.page.find_by_css_selector(
-            ".pg-bg-status-text").text
+        status = test_utils.get_watcher_dialogue_status(self)
+
+        if status != "Successfully completed.":
+            test_gui_helper.close_bgprocess_popup(self)
 
         if status != "Successfully completed.":
             test_gui_helper.close_bgprocess_popup(self)
@@ -132,8 +133,8 @@ class PGUtilitiesBackupFeatureTest(BaseFeatureTest):
 
         self.page.find_by_css_selector('.ajs-bg-bgprocess')
 
-        status = self.page.find_by_css_selector(
-            ".pg-bg-status-text").text
+        status = test_utils.get_watcher_dialogue_status(self)
+
         if status != "Successfully completed.":
             test_gui_helper.close_bgprocess_popup(self)
 

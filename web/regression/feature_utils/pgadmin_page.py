@@ -72,7 +72,8 @@ class PgadminPage:
             .perform()
         self.find_by_partial_link_text("Server...").click()
 
-        self.fill_input_by_field_name("name", server_config['name'])
+        self.fill_input_by_field_name("name", server_config['name'],
+                                      loose_focus=True)
         self.find_by_partial_link_text("Connection").click()
         self.fill_input_by_field_name("host", server_config['host'])
         self.fill_input_by_field_name("port", server_config['port'])
@@ -353,10 +354,10 @@ class PgadminPage:
             attempt = 0
             for attempt in range(0, 3):
                 field.click()
-                break;
+                break
         except Exception as e:
             time.sleep(.2)
-            if attempt  == 2:
+            if attempt == 2:
                 raise Exception(e)
         # Use send keys if input_keys true, else use javascript to set content
         if input_keys:
