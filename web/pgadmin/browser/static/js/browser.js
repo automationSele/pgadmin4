@@ -11,10 +11,11 @@ define('pgadmin.browser', [
   'sources/tree/tree',
   'sources/gettext', 'sources/url_for', 'require', 'jquery', 'underscore', 'underscore.string',
   'bootstrap', 'sources/pgadmin', 'pgadmin.alertifyjs', 'bundled_codemirror',
-  'sources/check_node_visibility', './toolbar', 'pgadmin.help', 'pgadmin.browser.utils',
+  'sources/check_node_visibility', './toolbar', 'pgadmin.help',
+  'sources/csrf', 'pgadmin.browser.utils',
   'wcdocker', 'jquery.contextmenu', 'jquery.aciplugin', 'jquery.acitree',
   'pgadmin.browser.preferences', 'pgadmin.browser.messages',
-  'pgadmin.browser.menu', 'pgadmin.browser.panel',
+  'pgadmin.browser.menu', 'pgadmin.browser.panel', 'pgadmin.browser.layout',
   'pgadmin.browser.error', 'pgadmin.browser.frame',
   'pgadmin.browser.node', 'pgadmin.browser.collection',
   'sources/codemirror/addon/fold/pgadmin-sqlfoldcode',
@@ -23,7 +24,7 @@ define('pgadmin.browser', [
   tree,
   gettext, url_for, require, $, _, S,
   Bootstrap, pgAdmin, Alertify, codemirror,
-  checkNodeVisibility, toolBar, help
+  checkNodeVisibility, toolBar, help, csrfToken
 ) {
   window.jQuery = window.$ = $;
   // Some scripts do export their object in the window only.
@@ -35,6 +36,8 @@ define('pgadmin.browser', [
 
   var pgBrowser = pgAdmin.Browser = pgAdmin.Browser || {};
   var select_object_msg = gettext('Please select an object in the tree view.');
+
+  csrfToken.setPGCSRFToken(pgAdmin.csrf_token_header, pgAdmin.csrf_token);
 
   var panelEvents = {};
   panelEvents[wcDocker.EVENT.VISIBILITY_CHANGED] = function() {
@@ -259,7 +262,6 @@ define('pgadmin.browser', [
           });
         }
       });
-
     },
     menu_categories: {
       /* name, label (pair) */
@@ -279,22 +281,7 @@ define('pgadmin.browser', [
       scripts[n] = _.isArray(scripts[n]) ? scripts[n] : [];
       scripts[n].push({'name': m, 'path': p, loaded: false});
     },
-    // Build the default layout
-    buildDefaultLayout: function(docker) {
-      var browserPanel = docker.addPanel('browser', wcDocker.DOCK.LEFT);
-      var dashboardPanel = docker.addPanel(
-        'dashboard', wcDocker.DOCK.RIGHT, browserPanel);
-      docker.addPanel('properties', wcDocker.DOCK.STACKED, dashboardPanel, {
-        tabOrientation: wcDocker.TAB.TOP,
-      });
-      docker.addPanel('sql', wcDocker.DOCK.STACKED, dashboardPanel);
-      docker.addPanel(
-        'statistics', wcDocker.DOCK.STACKED, dashboardPanel);
-      docker.addPanel(
-        'dependencies', wcDocker.DOCK.STACKED, dashboardPanel);
-      docker.addPanel(
-        'dependents', wcDocker.DOCK.STACKED, dashboardPanel);
-    },
+    masterpass_callback_queue: [],
     // Enable/disable menu options
     enable_disable_menus: function(item) {
       // Mechanism to enable/disable menus depending on the condition.
@@ -349,35 +336,6 @@ define('pgadmin.browser', [
             update: function() {},
           }], false);
         $obj_mnu.append(create_submenu.$el);
-      }
-    },
-    save_current_layout: function(layout_id, docker) {
-      if(docker) {
-        var layout = docker.save();
-        var settings = { setting: layout_id, value: layout };
-        $.ajax({
-          type: 'POST',
-          url: url_for('settings.store_bulk'),
-          data: settings,
-        });
-      }
-    },
-    restore_layout: function(docker, layout, defaultLayoutCallback) {
-      // Try to restore the layout if there is one
-      if (layout != '') {
-        try {
-          docker.restore(layout);
-        }
-        catch(err) {
-          docker.clear();
-          if(defaultLayoutCallback) {
-            defaultLayoutCallback(docker);
-          }
-        }
-      } else {
-        if(defaultLayoutCallback) {
-          defaultLayoutCallback(docker);
-        }
       }
     },
     init: function() {
@@ -489,8 +447,8 @@ define('pgadmin.browser', [
           node = obj.Nodes[d._type];
 
           /* If the node specific callback returns false, we will also return
-             * false for further processing.
-             */
+           * false for further processing.
+           */
           if (_.isObject(node.callbacks) &&
             eventName in node.callbacks &&
               typeof node.callbacks[eventName] == 'function' &&
@@ -525,21 +483,192 @@ define('pgadmin.browser', [
       pgBrowser.utils.registerScripts(this);
       pgBrowser.utils.addMenus(obj);
 
+      let headers = {};
+      headers[pgAdmin.csrf_token_header] = pgAdmin.csrf_token;
+
       // Ping the server every 5 minutes
       setInterval(function() {
         $.ajax({
           url: url_for('misc.cleanup'),
           type:'POST',
+          headers: headers,
         })
           .done(function() {})
           .fail(function() {});
       }, 300000);
 
+      obj.set_master_password('');
+
       obj.Events.on('pgadmin:browser:tree:add', obj.onAddTreeNode, obj);
       obj.Events.on('pgadmin:browser:tree:update', obj.onUpdateTreeNode, obj);
       obj.Events.on('pgadmin:browser:tree:refresh', obj.onRefreshTreeNode, obj);
+      obj.Events.on('pgadmin-browser:tree:loadfail', obj.onLoadFailNode, obj);
 
       obj.bind_beforeunload();
+    },
+
+    init_master_password: function() {
+      let self = this;
+      // Master password dialog
+      if (!Alertify.dlgMasterPass) {
+        Alertify.dialog('dlgMasterPass', function factory() {
+          return {
+            main: function(title, message, reset) {
+              this.set('title', title);
+              this.message = message;
+              this.reset = reset;
+            },
+            build: function() {
+              Alertify.pgDialogBuild.apply(this);
+            },
+            setup:function() {
+              return {
+                buttons:[{
+                  text: '',
+                  className: 'btn btn-secondary pull-left fa fa-question pg-alertify-icon-button',
+                  attrs: {
+                    name: 'dialog_help',
+                    type: 'button',
+                    label: gettext('Master password'),
+                    url: url_for('help.static', {
+                      'filename': 'master_password.html',
+                    }),
+                  },
+                },{
+                  text: gettext('Reset Master Password'), className: 'btn btn-secondary fa fa-trash-o pg-alertify-button pull-left',
+                },{
+                  text: gettext('Cancel'), className: 'btn btn-secondary fa fa-times pg-alertify-button',
+                  key: 27,
+                },{
+                  text: gettext('OK'), key: 13, className: 'btn btn-primary fa fa-check pg-alertify-button',
+                }],
+                focus: {element: '#password', select: true},
+                options: {
+                  modal: true, resizable: false, maximizable: false, pinnable: false,
+                },
+              };
+            },
+            prepare:function() {
+              let self = this;
+              self.setContent(self.message);
+              /* Reset button hide */
+              if(!self.reset) {
+                $(self.__internal.buttons[1].element).addClass('d-none');
+              } else {
+                $(self.__internal.buttons[1].element).removeClass('d-none');
+              }
+            },
+            callback: function(event) {
+              let parentDialog = this;
+
+              if (event.index == 3) {
+                /* OK Button */
+                self.set_master_password(
+                  $('#frmMasterPassword #password').val(),
+                  parentDialog.set_callback,
+                );
+              } else if(event.index == 2) {
+                /* Cancel button */
+                self.masterpass_callback_queue = [];
+              } else if(event.index == 1) {
+                /* Reset Button */
+                event.cancel = true;
+
+                Alertify.confirm(gettext('Reset Master Password'),
+                  gettext('This will remove all the saved passwords. This will also remove established connections to '
+                    + 'the server and you may need to reconnect again. Do you wish to continue ?'),
+                  function() {
+                    /* If user clicks Yes */
+                    self.reset_master_password();
+                    parentDialog.close();
+                    return true;
+                  },
+                  function() {/* If user clicks No */ return true;}
+                ).set('labels', {
+                  ok: gettext('Yes'),
+                  cancel: gettext('No'),
+                });
+              } else if(event.index == 0) {
+                /* help Button */
+                event.cancel = true;
+                self.showHelp(
+                  event.button.element.name,
+                  event.button.element.getAttribute('url'),
+                  null, null
+                );
+                return;
+              }
+            },
+          };
+        });
+      }
+    },
+
+    check_master_password: function(on_resp_callback) {
+      $.ajax({
+        url: url_for('browser.check_master_password'),
+        type: 'GET',
+        contentType: 'application/json',
+      }).done((res)=> {
+        if(on_resp_callback) {
+          if(res.data) {
+            on_resp_callback(true);
+          } else {
+            on_resp_callback(false);
+          }
+        }
+      }).fail(function(xhr, status, error) {
+        Alertify.pgRespErrorNotify(xhr, error);
+      });
+    },
+
+    reset_master_password: function() {
+      let self = this;
+      $.ajax({
+        url: url_for('browser.set_master_password'),
+        type: 'DELETE',
+        contentType: 'application/json',
+      }).done((res)=> {
+        if(!res.data) {
+          self.set_master_password('');
+        }
+      }).fail(function(xhr, status, error) {
+        Alertify.pgRespErrorNotify(xhr, error);
+      });
+    },
+
+    set_master_password: function(password='', set_callback=()=>{}) {
+      let data=null, self = this;
+
+      if(password != null || password!='') {
+        data = JSON.stringify({
+          'password': password,
+        });
+      }
+
+      self.masterpass_callback_queue.push(set_callback);
+
+      $.ajax({
+        url: url_for('browser.set_master_password'),
+        type: 'POST',
+        data: data,
+        dataType: 'json',
+        contentType: 'application/json',
+      }).done((res)=> {
+        if(!res.data.present) {
+          self.init_master_password();
+          Alertify.dlgMasterPass(res.data.title, res.data.content, res.data.reset);
+        } else {
+          setTimeout(()=>{
+            while(self.masterpass_callback_queue.length > 0) {
+              let callback = self.masterpass_callback_queue.shift();
+              callback();
+            }
+          }, 500);
+        }
+      }).fail(function(xhr, status, error) {
+        Alertify.pgRespErrorNotify(xhr, error);
+      });
     },
 
     bind_beforeunload: function() {
@@ -611,8 +740,8 @@ define('pgadmin.browser', [
               menus = pgMenu[a];
             }
 
-            if (!_.has(menus, m.name)) {
-              menus[m.name] = new MenuItem({
+            let get_menuitem_obj = function(m) {
+              return new MenuItem({
                 name: m.name, label: m.label, module: m.module,
                 category: m.category, callback: m.callback,
                 priority: m.priority, data: m.data, url: m.url || '#',
@@ -620,8 +749,21 @@ define('pgadmin.browser', [
                 enable: (m.enable == '' ? true : (_.isString(m.enable) &&
                     m.enable.toLowerCase() == 'false') ?
                   false : m.enable),
-                node: m.node,
+                node: m.node, checked: m.checked,
               });
+            };
+
+            if (!_.has(menus, m.name)) {
+              menus[m.name] = get_menuitem_obj(m);
+
+              if(m.menu_items) {
+                let sub_menu_items = [];
+
+                for(let i=0; i<m.menu_items.length; i++) {
+                  sub_menu_items.push(get_menuitem_obj(m.menu_items[i]));
+                }
+                menus[m.name]['menu_items'] = sub_menu_items;
+              }
             }
           } else  {
             console.warn(
@@ -1612,10 +1754,13 @@ define('pgadmin.browser', [
                 });
               }
 
-              Alertify.pgNotifier(
-                error, xhr, gettext('Error retrieving details for the node.'),
-                function() { console.warn(arguments); }
-              );
+              Alertify.pgNotifier(error, xhr, gettext('Error retrieving details for the node.'), function (msg) {
+                if (msg == 'CRYPTKEY_SET') {
+                  fetchNodeInfo(_i, _d, _n);
+                } else {
+                  console.warn(arguments);
+                }
+              });
             }
           });
       }.bind(this);
@@ -1656,6 +1801,21 @@ define('pgadmin.browser', [
       } else {
         fetchNodeInfo(_i, d, n);
       }
+    },
+
+    onLoadFailNode: function(_nodeData) {
+      let self = this,
+        isSelected = self.tree.isSelected(_nodeData);
+
+      /** Check if master password set **/
+      self.check_master_password((is_set)=>{
+        if(!is_set) {
+          self.set_master_password('', ()=>{
+            if(isSelected) { self.tree.select(_nodeData); }
+            self.tree.open(_nodeData);
+          });
+        }
+      });
     },
 
     removeChildTreeNodesById: function(_parentNode, _collType, _childIds) {

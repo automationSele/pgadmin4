@@ -20,10 +20,12 @@ import sys
 import traceback
 import json
 import random
+import flask
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
 
 import unittest
 
@@ -56,6 +58,9 @@ if config.SERVER_MODE is True:
     config.SECURITY_RECOVERABLE = True
     config.SECURITY_CHANGEABLE = True
     config.SECURITY_POST_CHANGE_VIEW = 'browser.change_password'
+
+# disable master password for test cases
+config.MASTER_PASSWORD_REQUIRED = False
 
 from regression import test_setup
 from regression.feature_utils.app_starter import AppStarter
@@ -95,6 +100,7 @@ from pgadmin.model import SCHEMA_VERSION
 
 # Delay the import test_utils as it needs updated config.SQLITE_PATH
 from regression.python_test_utils import test_utils
+from regression.python_test_utils.csrf_test_client import TestClient
 
 config.SETTINGS_SCHEMA_VERSION = SCHEMA_VERSION
 
@@ -105,16 +111,19 @@ config.CONSOLE_LOG_LEVEL = WARNING
 
 # Create the app
 app = create_app()
-app.config['WTF_CSRF_ENABLED'] = False
+
 app.PGADMIN_KEY = ''
 app.config.update({'SESSION_COOKIE_DOMAIN': None})
-test_client = app.test_client()
 driver = None
 app_starter = None
 handle_cleanup = None
 app.PGADMIN_RUNTIME = True
 if config.SERVER_MODE is True:
     app.PGADMIN_RUNTIME = False
+app.config['WTF_CSRF_ENABLED'] = True
+app.test_client_class = TestClient
+test_client = app.test_client()
+test_client.setApp(app)
 
 setattr(unittest.result.TestResult, "passed", [])
 
@@ -180,7 +189,14 @@ def get_test_modules(arguments):
     global driver, app_starter, handle_cleanup
 
     if not config.SERVER_MODE:
-        exclude_pkgs.append("browser.tests")
+        # following test cases applicable only for server mode
+        exclude_pkgs.extend([
+            "browser.tests.test_change_password",
+            "browser.tests.test_gravatar_image_display",
+            "browser.tests.test_login",
+            "browser.tests.test_logout",
+            "browser.tests.test_reset_password",
+        ])
     if arguments['exclude'] is not None:
         exclude_pkgs += arguments['exclude'].split(',')
 
@@ -217,6 +233,7 @@ def get_test_modules(arguments):
                     if test_setup.config_data['headless_chrome']:
                         options.add_argument("--headless")
             options.add_argument("--window-size=1280,1024")
+            options.add_experimental_option('w3c', False)
             driver = webdriver.Chrome(chrome_options=options)
 
         # maximize browser window

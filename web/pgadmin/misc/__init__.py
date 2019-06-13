@@ -13,6 +13,7 @@ import pgadmin.utils.driver as driver
 from flask import url_for, render_template, Response, request
 from flask_babelex import gettext
 from pgadmin.utils import PgAdminModule
+from pgadmin.utils.csrf import pgCSRFProtect
 from pgadmin.utils.preferences import Preferences
 from pgadmin.utils.session import cleanup_session_files
 
@@ -91,6 +92,7 @@ def index():
 # A special URL used to "ping" the server
 ##########################################################################
 @blueprint.route("/ping")
+@pgCSRFProtect.exempt
 def ping():
     """Generate a "PING" response to indicate that the server is alive."""
     return "PING"
@@ -98,6 +100,7 @@ def ping():
 
 # For Garbage Collecting closed connections
 @blueprint.route("/cleanup", methods=['POST'])
+@pgCSRFProtect.exempt
 def cleanup():
     driver.ping()
     # Cleanup session files.
@@ -127,6 +130,7 @@ def explain_js():
 # A special URL used to shut down the server
 ##########################################################################
 @blueprint.route("/shutdown", methods=('get', 'post'))
+@pgCSRFProtect.exempt
 def shutdown():
     if config.SERVER_MODE is not True:
         func = request.environ.get('werkzeug.server.shutdown')

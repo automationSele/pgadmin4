@@ -353,7 +353,10 @@ define([
             $.ajax({
               url: baseUrl,
               method: 'GET',
-              beforeSend: function() {
+              beforeSend: function(xhr) {
+                xhr.setRequestHeader(
+                  pgAdmin.csrf_token_header, pgAdmin.csrf_token
+                );
                 // set cursor to progress before every poll.
                 $('.debugger-container').addClass('show_progress');
               },
@@ -1510,17 +1513,17 @@ define([
       controller.Step_into(pgTools.DirectDebug.trans_id);
     },
     keyAction: function (event) {
-      var $el = this.$el, panel_id, actual_panel,
-        self = this;
+      let panel_type='';
 
-      panel_id = keyboardShortcuts.processEventDebugger(
-        $el, event, self.preferences
+      panel_type = keyboardShortcuts.processEventDebugger(
+        this.$el, event, this.preferences, pgTools.DirectDebug.docker
       );
 
-      // Panel navigation
-      if(!_.isUndefined(panel_id) && !_.isNull(panel_id)) {
-        actual_panel = panel_id + 1;
-        pgTools.DirectDebug.docker.findPanels()[actual_panel].focus();
+
+      if(!_.isNull(panel_type) && !_.isUndefined(panel_type) && panel_type != '') {
+        setTimeout(function() {
+          pgBrowser.Events.trigger(`pgadmin:debugger:${panel_type}:focus`);
+        }, 100);
       }
     },
   });
@@ -1853,6 +1856,10 @@ define([
         }
       });
 
+      pgBrowser.Events.on('pgadmin:debugger:code:focus', ()=>{
+        self.editor.focus();
+      });
+
       // On loading the docker, register the callbacks
       var onLoad = function() {
         self.docker.finishLoading(100);
@@ -1902,6 +1909,16 @@ define([
 
       // Create the toolbar view for debugging the function
       this.toolbarView = new DebuggerToolbarView();
+
+      /* wcDocker focuses on window always, and all our shortcuts are
+       * bind to editor-panel. So when we use wcDocker focus, editor-panel
+       * loses focus and events don't work.
+       */
+      $(window).on('keydown', (e)=>{
+        if(self.toolbarView.keyAction) {
+          self.toolbarView.keyAction(e);
+        }
+      });
 
       /* Cache may take time to load for the first time
        * Keep trying till available

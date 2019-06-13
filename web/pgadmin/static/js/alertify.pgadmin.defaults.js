@@ -107,7 +107,15 @@ define([
           if (contentType.indexOf('application/json') == 0) {
             var resp = JSON.parse(msg);
 
-            if (resp.result != null && (!resp.errormsg || resp.errormsg == '') &&
+            if(resp.info == 'CRYPTKEY_MISSING') {
+              var pgBrowser = window.pgAdmin.Browser;
+              pgBrowser.set_master_password('', ()=> {
+                if(onJSONResult && typeof(onJSONResult) == 'function') {
+                  onJSONResult('CRYPTKEY_SET');
+                }
+              });
+              return;
+            } else if (resp.result != null && (!resp.errormsg || resp.errormsg == '') &&
               onJSONResult && typeof(onJSONResult) == 'function') {
               return onJSONResult(resp.result);
             }
@@ -258,6 +266,17 @@ define([
     this.set('onresized', alertifyDialogResized.bind(this, true));
     this.set('onmaximized', alertifyDialogResized);
     this.set('onrestored', alertifyDialogResized);
+
+    /* Set the key to null if it is not defined
+     * When Browser autofill drop down value is clicked it raises a keyup event
+     * with undefined keyCode. The undefined keyCode matches the undefined key
+     * of alertify and triggers the button
+     */
+    for(let i=0; i<this.__internal.buttons.length; i++) {
+      if(_.isUndefined(this.__internal.buttons[i]['key'])) {
+        this.__internal.buttons[i]['key'] = null;
+      }
+    }
   };
 
   alertify.pgHandleItemError = function(xhr, error, message, args) {
@@ -375,6 +394,11 @@ define([
           reconnectServer();
         });
       return true;
+    } else if (jsonResp && jsonResp.info == 'CRYPTKEY_MISSING' && xhr.status == 503) {
+      /* Suppress the error here and handle in Alertify.pgNotifier wherever
+       * required, as it has callback option
+       */
+      return false;
     }
     return false;
   };

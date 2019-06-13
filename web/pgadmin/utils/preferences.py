@@ -78,7 +78,7 @@ class _Preference(object):
         # Look into the configuration table to find out the id of the specific
         # preference.
         res = PrefTable.query.filter_by(
-            name=name
+            name=name, cid=cid
         ).first()
 
         if res is None:
@@ -428,7 +428,7 @@ class Preferences(object):
         assert _type is not None, "Type for a preference cannot be none!"
         assert _type in (
             'boolean', 'integer', 'numeric', 'date', 'datetime',
-            'options', 'multiline', 'switch', 'node', 'text',
+            'options', 'multiline', 'switch', 'node', 'text', 'radioModern',
             'keyboardshortcut'
         ), "Type cannot be found in the defined list!"
 

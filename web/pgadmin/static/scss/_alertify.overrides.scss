@@ -11,6 +11,7 @@
     color: $color-primary-fg;
     overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
     border-radius: 0rem;
     border-top-left-radius: $panel-border-radius;
     border-top-right-radius: $panel-border-radius;
@@ -192,7 +193,7 @@
 
 .pg-alertify-icon-button {
   &:before {
-    font-size: 1.3em !important;
+    font-size: 1.1em !important;
     line-height: 1.2;
     font-family: $font-family-icon;
   }

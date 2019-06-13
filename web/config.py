@@ -50,7 +50,7 @@ APP_ICON = 'pg-icon'
 
 # Application version number components
 APP_RELEASE = 4
-APP_REVISION = 6
+APP_REVISION = 8
 
 # Application version suffix, e.g. 'beta1', 'dev'. Usually an empty string
 # for GA releases.
@@ -59,7 +59,7 @@ APP_SUFFIX = ''
 # Numeric application version for upgrade checks. Should be in the format:
 # [X]XYYZZ, where X is the release version, Y is the revision, with a leading
 # zero if needed, and Z represents the suffix, with a leading zero if needed
-APP_VERSION_INT = 40600
+APP_VERSION_INT = 40800
 
 # DO NOT CHANGE!
 # The application version string, constructed from the components
@@ -123,6 +123,10 @@ if (not hasattr(builtins, 'SERVER_MODE')) or builtins.SERVER_MODE is None:
 else:
     SERVER_MODE = builtins.SERVER_MODE
 
+# HTTP headers to search for CSRF token when it is not provided in the form.
+# Default is ['X-CSRFToken', 'X-CSRF-Token']
+WTF_CSRF_HEADERS = ['X-pgA-CSRFToken']
+
 # User ID (email address) to use for the default user in desktop mode.
 # The default should be fine here, as it's not exposed in the app.
 DESKTOP_USER = 'pgadmin4@pgadmin.org'
@@ -140,9 +144,6 @@ DEFAULT_SERVER = '127.0.0.1'
 # The default port on which the app server will listen if not set in the
 # environment by the runtime
 DEFAULT_SERVER_PORT = 5050
-
-# Enable CSRF protection?
-CSRF_ENABLED = True
 
 # Enable X-Frame-Option protection.
 # Set to one of "SAMEORIGIN", "ALLOW-FROM origin" or "" to disable.
@@ -417,6 +418,12 @@ SUPPORT_SSH_TUNNEL = True
 # Allow SSH Tunnel passwords to be saved if the user chooses.
 # Set to False to disable password saving.
 ALLOW_SAVE_TUNNEL_PASSWORD = False
+
+##########################################################################
+# Master password is used to encrypt/decrypt saved server passwords
+# Applicable for desktop mode only
+##########################################################################
+MASTER_PASSWORD_REQUIRED = True
 
 ##########################################################################
 # Local config settings

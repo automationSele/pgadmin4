@@ -23,20 +23,21 @@ from flask_login import user_logged_in, user_logged_out
 from flask_mail import Mail
 from flask_paranoid import Paranoid
 from flask_security import Security, SQLAlchemyUserDatastore, current_user
-from flask_security.utils import login_user
+from flask_security.utils import login_user, logout_user
 from werkzeug.datastructures import ImmutableDict
 from werkzeug.local import LocalProxy
 from werkzeug.utils import find_modules
 
 from pgadmin.model import db, Role, Server, ServerGroup, \
     User, Keys, Version, SCHEMA_VERSION as CURRENT_SCHEMA_VERSION
-from pgadmin.utils import PgAdminModule, driver
+from pgadmin.utils import PgAdminModule, driver, KeyManager
 from pgadmin.utils.preferences import Preferences
 from pgadmin.utils.session import create_session_interface, pga_unauthorised
 from pgadmin.utils.versioned_template_loader import VersionedTemplateLoader
 from datetime import timedelta
 from pgadmin.setup import get_version, set_version
 from pgadmin.utils.ajax import internal_server_error
+from pgadmin.utils.csrf import pgCSRFProtect
 
 
 # If script is running under python3, it will not have the xrange function
@@ -235,6 +236,8 @@ def create_app(app_name=None):
         os.environ['PGADMIN_TESTING_MODE'] == '1'
     ):
         config.SQLITE_PATH = config.TEST_SQLITE_PATH
+        config.MASTER_PASSWORD_REQUIRED = False
+        config.UPGRADE_CHECK_ENABLED = False
 
     # Ensure the various working directories exist
     from pgadmin.setup import create_app_data_directory, db_upgrade
@@ -367,7 +370,10 @@ def create_app(app_name=None):
         'CSRF_SESSION_KEY': config.CSRF_SESSION_KEY,
         'SECRET_KEY': config.SECRET_KEY,
         'SECURITY_PASSWORD_SALT': config.SECURITY_PASSWORD_SALT,
-        'SESSION_COOKIE_DOMAIN': config.SESSION_COOKIE_DOMAIN
+        'SESSION_COOKIE_DOMAIN': config.SESSION_COOKIE_DOMAIN,
+        # CSRF Token expiration till session expires
+        'WTF_CSRF_TIME_LIMIT': getattr(config, 'CSRF_TIME_LIMIT', None),
+        'WTF_CSRF_METHODS': ['GET', 'POST', 'PUT', 'DELETE'],
     }))
 
     security.init_app(app, user_datastore)
@@ -570,11 +576,22 @@ def create_app(app_name=None):
     def force_session_write(app, user):
         session.force_write = True
 
+    @user_logged_in.connect_via(app)
+    def store_crypt_key(app, user):
+        # in desktop mode, master password is used to encrypt/decrypt
+        # and is stored in the keyManager memory
+        if config.SERVER_MODE:
+            if 'password' in request.form:
+                current_app.keyManager.set(request.form['password'])
+
     @user_logged_out.connect_via(app)
     def current_user_cleanup(app, user):
         from config import PG_DEFAULT_DRIVER
         from pgadmin.utils.driver import get_driver
         from flask import current_app
+
+        # remove key
+        current_app.keyManager.reset()
 
         for mdl in current_app.logout_hooks:
             try:
@@ -625,6 +642,12 @@ def create_app(app_name=None):
                 )
                 abort(401)
             login_user(user)
+
+        # if the server is restarted the in memory key will be lost
+        # but the user session may still be active. Logout the user
+        # to get the key again when login
+        if config.SERVER_MODE and current_app.keyManager.get() is None:
+            logout_user()
 
     @app.after_request
     def after_request(response):
@@ -706,8 +729,16 @@ def create_app(app_name=None):
         current_app.logger.error(e, exc_info=True)
         return e
 
+    # Intialize the key manager
+    app.keyManager = KeyManager()
+
+    ##########################################################################
+    # Protection against CSRF attacks
+    ##########################################################################
+    with app.app_context():
+        pgCSRFProtect.init_app(app)
+
     ##########################################################################
     # All done!
     ##########################################################################
-
     return app

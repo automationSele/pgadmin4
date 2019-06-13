@@ -22,12 +22,14 @@ import loading_icon from 'acitree/image/load-root.gif';
 define([
   'jquery', 'underscore', 'underscore.string', 'pgadmin.alertifyjs',
   'sources/gettext', 'sources/url_for', 'dropzone', 'sources/pgadmin',
-  'tablesorter',
-], function($, _, S, Alertify, gettext, url_for, Dropzone, pgAdmin) {
+  'sources/csrf', 'tablesorter',
+], function($, _, S, Alertify, gettext, url_for, Dropzone, pgAdmin, csrfToken) {
 
   /*---------------------------------------------------------
     Define functions used for various operations
   ---------------------------------------------------------*/
+  // Set the CSRF Token
+  csrfToken.setPGCSRFToken(pgAdmin.csrf_token_header, pgAdmin.csrf_token);
 
   // Return file extension
   var getFileExtension = function(name) {
@@ -1464,9 +1466,14 @@ define([
             '<a href="javascript:void(0);" class="fa fa-trash dz_file_remove" data-dz-remove></a>' +
             '</div>';
 
+          // We need to append our csrf token with dropzone's ajax request header
+          let csrfToken = {};
+          csrfToken[pgAdmin.csrf_token_header] = pgAdmin.csrf_token;
+
           $('div#multiple-uploads').dropzone({
             paramName: 'newfile',
             url: pgAdmin.FileUtils.fileConnector,
+            headers: csrfToken,
             maxFilesize: fileSize,
             maxFiles: config.upload.number,
             addRemoveLinks: true,

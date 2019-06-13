@@ -25,6 +25,7 @@ class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
         ("Tests to check if Debugger is vulnerable to XSS", dict())
     ]
     function_name = ""
+
     def before(self):
         with test_utils.Database(self.server) as (connection, _):
             if connection.server_version < 90100:
@@ -34,7 +35,7 @@ class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
                 )
 
         # Some test function is needed for debugger
-        self.function_name = "a_test_function"+\
+        self.function_name = "a_test_function" + \
                              str(random.randint(10000, 65535))
         test_utils.create_debug_function(
             self.server, "postgres", self.function_name
@@ -62,7 +63,7 @@ class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
         self.page.toggle_open_tree_item('Schemas')
         self.page.toggle_open_tree_item('public')
         self.page.toggle_open_function_node()
-        self.page.select_tree_item(self.function_name+"()")
+        self.page.select_tree_item(self.function_name + "()")
 
     def _debug_function(self):
         self.page.driver.find_element_by_link_text("Object").click()

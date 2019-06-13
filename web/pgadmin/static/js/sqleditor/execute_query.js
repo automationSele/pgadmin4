@@ -57,13 +57,12 @@ class ExecuteQuery {
     if (sqlStatement.length <= 0) return;
 
     const self = this;
-    let service = axios.create({});
     self.explainPlan = explainPlan;
 
     const sqlStatementWithAnalyze = ExecuteQuery.prepareAnalyzeSql(sqlStatement, explainPlan);
 
     self.initializeExecutionOnSqlEditor(sqlStatementWithAnalyze);
-    service.post(
+    axios.post(
       this.generateURLReconnectionFlag(connect),
       JSON.stringify(sqlStatementWithAnalyze),
       {headers: {'Content-Type': 'application/json'}})
@@ -113,8 +112,7 @@ class ExecuteQuery {
 
   poll() {
     const self = this;
-    let service = axios.create({});
-    service.get(
+    axios.get(
       url_for('sqleditor.poll', {
         'trans_id': self.sqlServerObject.transId,
       })
@@ -232,6 +230,12 @@ class ExecuteQuery {
       this.sqlServerObject.handle_connection_lost(false, httpMessage);
     }
 
+    if(this.isCryptKeyMissing(httpMessage)) {
+      this.sqlServerObject.saveState('execute', [this.explainPlan]);
+      this.sqlServerObject.handle_cryptkey_missing();
+      return;
+    }
+
     let msg = httpMessage.response.data.errormsg;
     this.sqlServerObject.update_msg_history(false, msg);
   }
@@ -240,6 +244,12 @@ class ExecuteQuery {
     return httpMessage.response.status === 503 &&
       httpMessage.response.data.info !== undefined &&
       httpMessage.response.data.info === 'CONNECTION_LOST';
+  }
+
+  isCryptKeyMissing(httpMessage) {
+    return httpMessage.response.status === 503 &&
+      httpMessage.response.data.info !== undefined &&
+      httpMessage.response.data.info === 'CRYPTKEY_MISSING';
   }
 
   removeGridViewMarker() {
