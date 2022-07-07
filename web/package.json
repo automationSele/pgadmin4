@@ -72,7 +72,7 @@
     "jquery-ui": "^1.12.1",
     "json-bignumber": "^1.0.1",
     "leaflet": "^1.5.1",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "moment-timezone": "^0.5.23",
     "mousetrap": "^1.6.3",
     "requirejs": "~2.3.6",
